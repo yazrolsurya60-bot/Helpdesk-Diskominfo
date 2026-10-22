@@ -335,10 +335,10 @@ class FrontdeskController extends Controller
         // Tentukan link kembali: jika dipegang sendiri arahkan ke ruang-kerja, jika masih open ke index
         $backRoute = $ticket->user_id === Auth::id()
             ? route('frontdesk.ruang-kerja')
-            : route('frontdesk.monitoring');
+            : ($ticket->status === 'open' ? route('frontdesk.index') : route('frontdesk.monitoring'));
         $backLabel = $ticket->user_id === Auth::id()
             ? 'Kembali ke Ruang Kerja'
-            : 'Kembali ke Monitoring';
+            : ($ticket->status === 'open' ? 'Kembali ke Dashboard Utama' : 'Kembali ke Monitoring');
 
         return view('tickets.chat', [
             'ticket' => $ticket,
