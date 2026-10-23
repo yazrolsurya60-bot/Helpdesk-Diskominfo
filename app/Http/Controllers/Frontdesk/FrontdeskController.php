@@ -332,13 +332,19 @@ class FrontdeskController extends Controller
         $hoursHeld = round($workingMinutes / 60, 1);
         $isPastSla = SlaService::isPastSla($ticket->assigned_at);
 
-        // Tentukan link kembali: jika dipegang sendiri arahkan ke ruang-kerja, jika masih open ke index
-        $backRoute = $ticket->user_id === Auth::id()
-            ? route('frontdesk.ruang-kerja')
-            : ($ticket->status === 'open' ? route('frontdesk.index') : route('frontdesk.monitoring'));
-        $backLabel = $ticket->user_id === Auth::id()
-            ? 'Kembali ke Ruang Kerja'
-            : ($ticket->status === 'open' ? 'Kembali ke Dashboard' : 'Kembali ke Monitoring');
+        // Tentukan link kembali:
+        // Tiket yang sudah selesai atau masih open diarahkan ke dashboard utama.
+        // Tiket in-progress milik sendiri diarahkan ke ruang kerja, sedangkan milik staf lain ke monitoring.
+        if ($ticket->status === 'selesai' || $ticket->status === 'open') {
+            $backRoute = route('frontdesk.index');
+            $backLabel = 'Kembali ke Dashboard';
+        } elseif ($ticket->user_id === Auth::id()) {
+            $backRoute = route('frontdesk.ruang-kerja');
+            $backLabel = 'Kembali ke Ruang Kerja';
+        } else {
+            $backRoute = route('frontdesk.monitoring');
+            $backLabel = 'Kembali ke Monitoring';
+        }
 
         return view('tickets.chat', [
             'ticket' => $ticket,

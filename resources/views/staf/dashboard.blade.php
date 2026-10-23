@@ -161,25 +161,40 @@
                                         </span>
                                     </td>
                                     <td class="py-4 px-5 whitespace-nowrap">
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Open
-                                        </span>
+                                        @if($ticket->status === 'open')
+                                            <span
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Open
+                                            </span>
+                                        @elseif($ticket->status === 'progress')
+                                            <span
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> In Progress
+                                            </span>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Selesai
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="py-4 px-5 whitespace-nowrap text-on-surface-variant text-xs">
                                         {{ $ticket->created_at->diffForHumans() }}
                                     </td>
                                     <td class="py-4 px-5 text-right whitespace-nowrap" onclick="event.stopPropagation()">
-                                        <form action="{{ route('staf.tickets.ambil', $ticket) }}" method="POST"
-                                            onsubmit="return confirm('Apakah Anda yakin ingin mengambil tiket #{{ $ticket->id }} ini?');"
-                                            class="inline">
-                                            @csrf
-                                            <button type="submit"
-                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1e3a8a] hover:bg-[#172554] text-white text-xs font-medium rounded-lg shadow-sm transition-colors">
-                                                <span class="material-symbols-outlined text-[16px]">touch_app</span>
-                                                <span>Ambil Tiket</span>
-                                            </button>
-                                        </form>
+                                        @if($ticket->status === 'open')
+                                            <form action="{{ route('staf.tickets.ambil', $ticket) }}" method="POST"
+                                                onsubmit="return confirm('Apakah Anda yakin ingin mengambil tiket #{{ $ticket->id }} ini?');"
+                                                class="inline">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1e3a8a] hover:bg-[#172554] text-white text-xs font-medium rounded-lg shadow-sm transition-colors"
+                                                    title="Ambil Tiket">
+                                                    <span class="material-symbols-outlined text-[16px]">touch_app</span>
+                                                    <span>Ambil Tiket</span>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty

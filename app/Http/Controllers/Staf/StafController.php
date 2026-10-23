@@ -31,8 +31,7 @@ class StafController extends Controller
         $statClaimed = Ticket::where('status', 'progress')->count();
 
         // Query Tiket Masuk (Status Open)
-        $query = Ticket::with(['kategori', 'user'])
-            ->where('status', 'open');
+        $query = Ticket::with(['kategori', 'user']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -217,12 +216,16 @@ class StafController extends Controller
         $hoursHeld = round($workingMinutes / 60, 1);
         $isPastSla = SlaService::isPastSla($ticket->assigned_at);
 
-        $backRoute = $ticket->user_id === Auth::id()
-            ? route('staf.tiket-saya')
-            : route('staf.dashboard');
-        $backLabel = $ticket->user_id === Auth::id()
-            ? 'Kembali ke Tiket Saya'
-            : 'Kembali ke Antrean';
+        // Tentukan link kembali:
+        // Tiket aktif milik staf diarahkan ke Tiket Saya.
+        // Tiket selesai atau masih open diarahkan ke dashboard antrean.
+        if ($ticket->user_id === Auth::id() && $ticket->status === 'progress') {
+            $backRoute = route('staf.tiket-saya');
+            $backLabel = 'Kembali ke Tiket Saya';
+        } else {
+            $backRoute = route('staf.dashboard');
+            $backLabel = $ticket->status === 'selesai' ? 'Kembali ke Dashboard' : 'Kembali ke Dashboard';
+        }
 
         return view('tickets.chat', [
             'ticket' => $ticket,

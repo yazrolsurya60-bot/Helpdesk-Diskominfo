@@ -194,7 +194,7 @@
                                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1e3a8a] hover:bg-[#172554] text-white text-xs font-medium rounded-lg shadow-sm transition-colors"
                                                         title="Ambil Tiket">
                                                         <span class="material-symbols-outlined text-[16px]">touch_app</span>
-                                                        <span>Ambil</span>
+                                                        <span>Ambil Tiket</span>
                                                     </button>
                                                 </form>
                                                 {{-- Distribusi --}}

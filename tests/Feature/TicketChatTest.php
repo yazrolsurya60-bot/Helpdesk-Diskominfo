@@ -153,4 +153,74 @@ class TicketChatTest extends TestCase
         $responseFd->assertSee("window.location='" . route('frontdesk.tickets.chat', $openTicket->id) . "'", false);
         $responseFd->assertSee('event.stopPropagation()', false);
     }
+
+    public function test_frontdesk_viewing_completed_ticket_sees_back_to_dashboard_button(): void
+    {
+        $completedTicket = Ticket::create([
+            'user_id' => $this->frontDeskUser->id,
+            'nomor_wa' => '081299998888',
+            'nama_pemohon' => 'Siti Aminah',
+            'keluhan' => 'Konsultasi selesai',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'selesai',
+        ]);
+
+        $response = $this->actingAs($this->frontDeskUser)
+            ->get(route('frontdesk.tickets.chat', $completedTicket));
+
+        $response->assertStatus(200);
+        $response->assertSee(route('frontdesk.index'));
+        $response->assertSee('Kembali ke Dashboard');
+        $response->assertDontSee('Kembali ke Ruang Kerja');
+    }
+
+    public function test_frontdesk_viewing_own_progress_ticket_sees_back_to_ruang_kerja_button(): void
+    {
+        $progressTicket = Ticket::create([
+            'user_id' => $this->frontDeskUser->id,
+            'nomor_wa' => '081299998888',
+            'nama_pemohon' => 'Siti Aminah',
+            'keluhan' => 'Tiket sedang diproses',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'progress',
+            'assigned_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->frontDeskUser)
+            ->get(route('frontdesk.tickets.chat', $progressTicket));
+
+        $response->assertStatus(200);
+        $response->assertSee(route('frontdesk.ruang-kerja'));
+        $response->assertSee('Kembali ke Ruang Kerja');
+    }
+
+    public function test_frontdesk_viewing_staf_progress_ticket_sees_back_to_monitoring_button(): void
+    {
+        $response = $this->actingAs($this->frontDeskUser)
+            ->get(route('frontdesk.tickets.chat', $this->ticket));
+
+        $response->assertStatus(200);
+        $response->assertSee(route('frontdesk.monitoring'));
+        $response->assertSee('Kembali ke Monitoring');
+    }
+
+    public function test_staf_viewing_completed_ticket_sees_back_to_dashboard_button(): void
+    {
+        $completedTicket = Ticket::create([
+            'user_id' => $this->stafUser->id,
+            'nomor_wa' => '081299997777',
+            'nama_pemohon' => 'Rian Hidayat',
+            'keluhan' => 'Perbaikan laptop sudah selesai',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'selesai',
+        ]);
+
+        $response = $this->actingAs($this->stafUser)
+            ->get(route('staf.tickets.chat', $completedTicket));
+
+        $response->assertStatus(200);
+        $response->assertSee(route('staf.dashboard'));
+        $response->assertSee('Kembali ke Dashboard');
+        $response->assertDontSee('Kembali ke Tiket Saya');
+    }
 }
