@@ -5,13 +5,13 @@
 @section('content')
     <div class="flex flex-col w-full">
         <div class="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full" x-data="{
-                                                                        disposisiModalOpen: false,
-                                                                        selectedTicket: null,
-                                                                        openDisposisi(ticket) {
-                                                                            this.selectedTicket = ticket;
-                                                                            this.disposisiModalOpen = true;
-                                                                        }
-                                                                    }">
+                                                                                        disposisiModalOpen: false,
+                                                                                        selectedTicket: null,
+                                                                                        openDisposisi(ticket) {
+                                                                                            this.selectedTicket = ticket;
+                                                                                            this.disposisiModalOpen = true;
+                                                                                        }
+                                                                                    }">
             <!-- 1. Page Header -->
             <div class="flex flex-col gap-1">
                 <div class="inline-flex items-center gap-2">
@@ -64,6 +64,9 @@
                         <div class="flex items-baseline gap-2 mt-1">
                             <span class="font-headline-lg text-3xl font-bold text-on-surface leading-none">
                                 {{ $statCompletedToday }}
+                            </span>
+                            <span class="font-body-sm text-sm text-on-surface-variant font-medium">
+                                tiket terselesaikan
                             </span>
                         </div>
                     </div>
