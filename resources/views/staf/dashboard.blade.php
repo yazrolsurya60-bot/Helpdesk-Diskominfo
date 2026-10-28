@@ -141,7 +141,7 @@
                         <tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/20">
                             @forelse($tickets as $ticket)
                                 <tr onclick="window.location='{{ route('staf.tickets.chat', $ticket->id) }}'"
-                                    class="hover:bg-primary/5 hover:border-l-4 hover:border-l-primary cursor-pointer transition-all group">
+                                    class="hover:bg-primary/5 hover:border-l-primary cursor-pointer group">
                                     <td class="py-4 px-5 whitespace-nowrap font-bold text-primary">
                                         #{{ $ticket->id }}
                                     </td>
