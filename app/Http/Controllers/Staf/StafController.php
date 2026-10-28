@@ -224,7 +224,7 @@ class StafController extends Controller
             $backLabel = 'Kembali ke Tiket Saya';
         } else {
             $backRoute = route('staf.dashboard');
-            $backLabel = $ticket->status === 'selesai' ? 'Kembali ke Dashboard' : 'Kembali ke Dashboard';
+            $backLabel = $ticket->status === 'selesai' ? 'Kembali ke Dashboard' : 'Kembali ke Antrean';
         }
 
         return view('tickets.chat', [
