@@ -12,6 +12,9 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Webhook WhatsApp (Foonte) - Akses publik tanpa auth
+Route::post('/webhook/whatsapp', [\App\Http\Controllers\Api\WhatsAppWebhookController::class, 'handle'])->name('webhook.whatsapp');
+
 Route::middleware(['auth'])->group(function () {
     // Admin Routes
     Route::prefix('admin')->name('admin.')->group(function () {
