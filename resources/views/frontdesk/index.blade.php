@@ -142,7 +142,7 @@
                         <tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/20">
                             @forelse($tickets as $ticket)
                                 <tr onclick="window.location='{{ route('frontdesk.tickets.chat', $ticket->id) }}'"
-                                    class="hover:bg-primary/5 hover:border-l-4 hover:border-l-primary cursor-pointer transition-all group">
+                                    class="hover:bg-primary/5 hover:border-l-primary cursor-pointer group">
                                     <td class="py-4 px-5 whitespace-nowrap font-bold text-primary">
                                         #{{ $ticket->id }}
                                     </td>
@@ -198,8 +198,9 @@
                                                     </button>
                                                 </form>
                                                 {{-- Distribusi --}}
-                                                <button type="button"
-                                                    onclick="openDistribusiModal({{ $ticket->id }}, '{{ addslashes($ticket->nama_pemohon) }}', '{{ addslashes($ticket->keluhan) }}')"
+                                                <button type="button" {{-- Perbaikan bug tidak bisa di pencet --}}
+                                                    data-ticket-id="{{ $ticket->id }}" data-pelapor="{{ $ticket->nama_pemohon }}"
+                                                    data-kendala="{{ $ticket->keluhan }}" onclick="handleOpenDistribusi(this)"
                                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-container border border-outline-variant/60 text-on-surface hover:bg-surface-container-high text-xs font-medium rounded-lg shadow-xs transition-colors"
                                                     title="Distribusi Tiket">
                                                     <span class="material-symbols-outlined text-[16px] text-primary">forward</span>
@@ -352,9 +353,15 @@
 
     <script>
         // Distribusi Modal
-        function openDistribusiModal(ticketId, pelapor, kendala) {
+        function handleOpenDistribusi(button) {
+            const ticketId = button.dataset.ticketId;
+            const pelapor = button.dataset.pelapor;
+            const kendala = button.dataset.kendala;
+
             document.getElementById('distribusiTicketInfo').textContent = '#TKT-' + ticketId + ' — ' + pelapor + ': ' + kendala;
             document.getElementById('distribusiForm').action = '/frontdesk/tickets/' + ticketId + '/distribusi';
+
+            // Tampilkan modal seperti biasa
             const modal = document.getElementById('distribusiModal');
             const box = document.getElementById('distribusiModalBox');
             modal.classList.remove('hidden');
