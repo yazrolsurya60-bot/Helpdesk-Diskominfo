@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Ticket;
 use App\Models\KategoriLayanan;
+use App\Models\BidangStaf;
 use App\Models\WaLog;
 use App\Services\SlaService;
 use Illuminate\Support\Facades\Hash;
@@ -72,13 +73,15 @@ class AdminController extends Controller
 
     public function index()
     {
-        $users = User::all();
-        return view('admin.users.index', compact('users'));
+        $users = User::with('bidangStaf')->get();
+        $bidangList = BidangStaf::orderBy('nama_bidang')->get();
+        return view('admin.users.index', compact('users', 'bidangList'));
     }
 
     public function create()
     {
-        return view('admin.users.create');
+        $bidangList = BidangStaf::orderBy('nama_bidang')->get();
+        return view('admin.users.create', compact('bidangList'));
     }
 
     public function store(Request $request)
@@ -88,6 +91,7 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,front_desk,staf_bidang',
+            'bidang_id' => 'nullable|exists:bidang_staf,id',
         ]);
 
         User::create([
@@ -95,6 +99,7 @@ class AdminController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'bidang_id' => $request->role === 'staf_bidang' ? $request->bidang_id : null,
         ]);
 
         // Fitur: Notifikasi Pembaruan Data
@@ -103,7 +108,8 @@ class AdminController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $bidangList = BidangStaf::orderBy('nama_bidang')->get();
+        return view('admin.users.edit', compact('user', 'bidangList'));
     }
 
     public function update(Request $request, User $user)
@@ -112,11 +118,13 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,front_desk,staf_bidang',
+            'bidang_id' => 'nullable|exists:bidang_staf,id',
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
+        $user->bidang_id = $request->role === 'staf_bidang' ? $request->bidang_id : null;
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
