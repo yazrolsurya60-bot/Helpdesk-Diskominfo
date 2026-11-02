@@ -368,6 +368,11 @@ class ReportController extends Controller
             ];
         });
 
+        // Hitung data chart grafik tersinkronisasi dengan filter
+        $chartData = $this->getTrendChartData($startDate, $endDate, $kategoriId);
+        $selectedKategori = ($kategoriId && $kategoriId !== 'all') ? KategoriLayanan::find($kategoriId) : null;
+        $period = $request->query('period', 'day');
+
         return view('admin.reports.print', compact(
             'tickets',
             'totalTickets',
@@ -376,7 +381,11 @@ class ReportController extends Controller
             'totalOpen',
             'staffPerformance',
             'startDate',
-            'endDate'
+            'endDate',
+            'kategoriId',
+            'selectedKategori',
+            'chartData',
+            'period'
         ));
     }
 }
