@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\RiwayatTiket;
 use App\Models\NotifikasiInternal;
 use App\Models\WaLog;
+use App\Models\LampiranTiket;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\SlaService;
@@ -346,6 +348,8 @@ class FrontdeskController extends Controller
             $backLabel = 'Kembali ke Monitoring';
         }
 
+        $canChat = ($ticket->status === 'progress' && $ticket->user_id === Auth::id());
+
         return view('tickets.chat', [
             'ticket' => $ticket,
             'workingMinutes' => $workingMinutes,
@@ -356,6 +360,7 @@ class FrontdeskController extends Controller
             'sendRoute' => route('frontdesk.tickets.chat.send', $ticket->id),
             'finishRoute' => route('frontdesk.tickets.selesai', $ticket->id),
             'userRole' => 'front_desk',
+            'canChat' => $canChat,
         ]);
     }
 
@@ -364,16 +369,61 @@ class FrontdeskController extends Controller
      */
     public function kirimPesan(Request $request, Ticket $ticket): \Illuminate\Http\RedirectResponse
     {
+        // Guard Clause: Hanya penanggung jawab pada tiket aktif (progress) yang berhak mengirim pesan
+        if ($ticket->status !== 'progress' || $ticket->user_id !== Auth::id()) {
+            $pesanError = match ($ticket->status) {
+                'open' => 'Pesan tidak dapat dikirim karena tiket masih berstatus Open di antrean umum. Ambil tiket terlebih dahulu.',
+                'selesai' => 'Pesan tidak dapat dikirim karena tiket telah selesai ditangani.',
+                default => 'Pesan tidak dapat dikirim karena Anda bukan petugas penanggung jawab tiket ini (Mode Read-Only).',
+            };
+
+            return redirect()->route('frontdesk.tickets.chat', $ticket->id)->with('error', $pesanError);
+        }
+
         $request->validate([
-            'message' => 'required|string|max:3000',
+            'message' => 'nullable|string|max:3000|required_without:lampiran',
+            'lampiran' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'message.required_without' => 'Pesan teks atau foto lampiran wajib diisi.',
+            'lampiran.image' => 'Berkas lampiran harus berupa gambar.',
+            'lampiran.mimes' => 'Format gambar yang diperbolehkan hanya JPG, JPEG, PNG, dan WEBP.',
+            'lampiran.max' => 'Ukuran gambar maksimal 5 MB.',
         ]);
+
+        $filePath = null;
+        if ($request->hasFile('lampiran')) {
+            $lampiran = new LampiranTiket();
+            $lampiran->ticket_id = $ticket->id;
+            $lampiran->uploadFile($request->file('lampiran'));
+            $filePath = $lampiran->file_path;
+        }
+
+        $messageText = trim($request->message ?? '');
+        if ($filePath) {
+            $messageContent = $messageText !== '' ? $messageText . "\n[FOTO:" . $filePath . "]" : "[FOTO:" . $filePath . "]";
+        } else {
+            $messageContent = $messageText;
+        }
 
         WaLog::create([
             'ticket_id' => $ticket->id,
             'sender_type' => 'pegawai',
-            'message' => trim($request->message),
+            'message' => $messageContent,
         ]);
 
-        return redirect()->route('frontdesk.tickets.chat', $ticket->id)->with('success', 'Pesan balasan berhasil terkirim ke WhatsApp pemohon.');
+        return redirect()->route('frontdesk.tickets.chat', $ticket->id)
+            ->with('success', 'Pesan balasan' . ($filePath ? ' dan foto lampiran' : '') . ' berhasil terkirim ke WhatsApp pemohon.');
+    }
+
+    /**
+     * Download Berkas Foto Lampiran Tiket
+     */
+    public function downloadLampiran(Ticket $ticket, LampiranTiket $lampiran): StreamedResponse
+    {
+        if ($lampiran->ticket_id !== $ticket->id) {
+            abort(403, 'Akses berkas tidak sah untuk tiket ini.');
+        }
+
+        return $lampiran->downloadFile();
     }
 }
