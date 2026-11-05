@@ -103,7 +103,7 @@ class FoonteService
             . "1. Reset password email kalbarprov\n"
             . "2. Gangguan akses internet\n"
             . "3. Kendala absensi\n"
-            . "4. Knedala aplikasi e-aktivity\n\n"
+            . "4. Kendala aplikasi e-aktivity\n\n"
             . "*Format keluhan :*\n"
             . "Nama :\n"
             . "Jabatan :\n"
