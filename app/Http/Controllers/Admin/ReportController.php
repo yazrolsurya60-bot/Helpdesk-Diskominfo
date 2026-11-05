@@ -86,6 +86,12 @@ class ReportController extends Controller
         // Data tren grafik (Per Hari, Per Bulan, Per Tahun)
         $chartData = $this->getTrendChartData($startDate, $endDate, $kategoriId);
 
+        // Query daftar tiket penugasan terkait dengan paginasi
+        $tickets = (clone $ticketQuery)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
         return view('admin.reports.index', compact(
             'totalTickets',
             'totalResolved',
@@ -97,7 +103,8 @@ class ReportController extends Controller
             'startDate',
             'endDate',
             'kategoriId',
-            'chartData'
+            'chartData',
+            'tickets'
         ));
     }
 
