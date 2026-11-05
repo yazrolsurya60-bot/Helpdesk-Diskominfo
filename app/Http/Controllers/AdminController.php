@@ -142,4 +142,76 @@ class AdminController extends Controller
         // Fitur: Notifikasi Pembaruan Data
         return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
     }
+
+    /**
+     * Manajemen Bidang Staf — Tampilan Daftar & Pencarian
+     */
+    public function indexBidang(Request $request)
+    {
+        $search = $request->query('q') ?? $request->query('search');
+
+        $query = BidangStaf::withCount('users');
+
+        if ($search) {
+            $query->where('nama_bidang', 'like', "%{$search}%");
+        }
+
+        $bidangList = $query->orderBy('nama_bidang', 'asc')->paginate(10)->withQueryString();
+        $totalBidang = BidangStaf::count();
+        $totalStafTerdistribusi = User::whereNotNull('bidang_id')->count();
+
+        return view('admin.bidang.index', compact('bidangList', 'totalBidang', 'totalStafTerdistribusi', 'search'));
+    }
+
+    /**
+     * Simpan Data Bidang Baru
+     */
+    public function storeBidang(Request $request)
+    {
+        $request->validate([
+            'nama_bidang' => 'required|string|max:255|unique:bidang_staf,nama_bidang',
+        ], [
+            'nama_bidang.required' => 'Nama bidang wajib diisi.',
+            'nama_bidang.unique' => 'Nama bidang sudah terdaftar dalam sistem.',
+        ]);
+
+        BidangStaf::create([
+            'nama_bidang' => $request->nama_bidang,
+        ]);
+
+        return redirect()->route('admin.bidang.index')->with('success', 'Data bidang berhasil ditambahkan!');
+    }
+
+    /**
+     * Perbarui Data Bidang
+     */
+    public function updateBidang(Request $request, BidangStaf $bidang)
+    {
+        $request->validate([
+            'nama_bidang' => 'required|string|max:255|unique:bidang_staf,nama_bidang,' . $bidang->id,
+        ], [
+            'nama_bidang.required' => 'Nama bidang wajib diisi.',
+            'nama_bidang.unique' => 'Nama bidang sudah terdaftar dalam sistem.',
+        ]);
+
+        $bidang->update([
+            'nama_bidang' => $request->nama_bidang,
+        ]);
+
+        return redirect()->route('admin.bidang.index')->with('success', 'Data bidang berhasil diperbarui!');
+    }
+
+    /**
+     * Hapus Data Bidang
+     */
+    public function destroyBidang(BidangStaf $bidang)
+    {
+        if ($bidang->users()->count() > 0) {
+            return redirect()->route('admin.bidang.index')->with('error', 'Tidak dapat menghapus bidang karena masih memiliki staf teknis terkait. Alihkan staf ke bidang lain terlebih dahulu.');
+        }
+
+        $bidang->delete();
+
+        return redirect()->route('admin.bidang.index')->with('success', 'Data bidang berhasil dihapus!');
+    }
 }
