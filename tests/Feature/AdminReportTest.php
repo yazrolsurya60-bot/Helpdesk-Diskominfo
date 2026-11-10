@@ -123,6 +123,44 @@ class AdminReportTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Laporan Rekap Kinerja &amp; Penanganan Tiket Helpdesk', false);
+        $response->assertSee('1. Grafik Tren &amp; Penyelesaian Tiket', false);
+        $response->assertSee('chartBarsContainer');
+        $response->assertViewHas('chartData');
+        $response->assertDontSee('btnDay');
+        $response->assertDontSee('btnMonth');
+        $response->assertDontSee('btnYear');
+        $response->assertDontSee('Tampilan Grafik:');
+    }
+
+    public function test_admin_printable_report_synchronizes_with_filters(): void
+    {
+        Ticket::create([
+            'user_id' => $this->stafUser->id,
+            'nomor_wa' => '081234567890',
+            'nama_pemohon' => 'Andi Wijaya',
+            'keluhan' => 'Router restart berkala',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'selesai',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.reports.print', [
+            'start_date' => now()->format('Y-m-d'),
+            'end_date' => now()->format('Y-m-d'),
+            'kategori_id' => $this->kategori->id,
+            'period' => 'day',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('chartData');
+        $response->assertViewHas('selectedKategori');
+        $response->assertSee($this->kategori->nama_layanan);
+        $response->assertSee('chartSummaryTable');
+        $response->assertSee('Periode Grafik:');
+        $response->assertSee('Harian');
+
+        $chartData = $response->viewData('chartData');
+        $this->assertNotEmpty($chartData['day']);
     }
 
     public function test_admin_reports_provides_trend_chart_data_for_day_month_and_year(): void
@@ -149,5 +187,73 @@ class AdminReportTest extends TestCase
         $this->assertNotEmpty($chartData['day']);
         $this->assertCount(12, $chartData['month']);
         $this->assertCount(5, $chartData['year']);
+    }
+
+    public function test_admin_reports_displays_paginated_ticket_list(): void
+    {
+        $ticket = Ticket::create([
+            'user_id' => $this->stafUser->id,
+            'nomor_wa' => '081234567890',
+            'nama_pemohon' => 'Bambang Pamungkas',
+            'keluhan' => 'Permasalahan printer dan switch',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'open',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.reports.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Daftar Tiket Penugasan Terkait');
+        $response->assertSee('#TKT-' . $ticket->id);
+        $response->assertSee('Bambang Pamungkas');
+        $response->assertSee('Permasalahan printer dan switch');
+        $response->assertSee('Perangkat Lunak');
+        $response->assertViewHas('tickets');
+    }
+
+    public function test_admin_reports_ticket_list_filtered_by_date_and_category(): void
+    {
+        $kategoriJaringan = KategoriLayanan::create([
+            'nama_layanan' => 'Jaringan Internet',
+            'status_aktif' => true,
+        ]);
+
+        \Carbon\Carbon::setTestNow('2026-10-15 08:30:00');
+        $matchingTicket = Ticket::create([
+            'user_id' => $this->stafUser->id,
+            'nomor_wa' => '081234567891',
+            'nama_pemohon' => 'Ahmad Dahlan',
+            'keluhan' => 'Koneksi FO terputus',
+            'id_kategori_api' => $kategoriJaringan->id,
+            'status' => 'progress',
+        ]);
+
+        \Carbon\Carbon::setTestNow('2026-09-01 10:00:00');
+        $unmatchingTicket = Ticket::create([
+            'user_id' => $this->stafUser->id,
+            'nomor_wa' => '081234567892',
+            'nama_pemohon' => 'Siti Nurhaliza',
+            'keluhan' => 'Bug modul pelaporan',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'selesai',
+        ]);
+
+        \Carbon\Carbon::setTestNow('2026-10-20 12:00:00');
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.reports.index', [
+            'start_date' => '2026-10-01',
+            'end_date' => '2026-10-31',
+            'kategori_id' => $kategoriJaringan->id,
+        ]));
+
+        \Carbon\Carbon::setTestNow(); // Reset time
+
+        $response->assertStatus(200);
+        $response->assertSee('#TKT-' . $matchingTicket->id);
+        $response->assertSee('Ahmad Dahlan');
+        $response->assertSee('Koneksi FO terputus');
+        $response->assertDontSee('#TKT-' . $unmatchingTicket->id);
+        $response->assertDontSee('Siti Nurhaliza');
     }
 }
