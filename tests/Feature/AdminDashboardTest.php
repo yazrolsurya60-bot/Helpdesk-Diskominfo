@@ -88,9 +88,11 @@ class AdminDashboardTest extends TestCase
         $response->assertStatus(200);
 
         // Verifikasi Nilai KPI Cards Dinamis
+        $response->assertSee('Total Tiket');
         $response->assertSee('Tiket Terbuka');
         $response->assertSee('In Progress');
         $response->assertSee('Sudah Diselesaikan');
+        $response->assertViewHas('totalTickets', 3);
 
         // Verifikasi Data Tiket Muncul di Tabel
         $response->assertSee('#' . $t1->id);
