@@ -7,6 +7,9 @@ use App\Models\KategoriLayanan;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\WaLog;
+use App\Models\LampiranTiket;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -93,19 +96,29 @@ class TicketChatTest extends TestCase
         $response->assertSee('Andi Pratama');
     }
 
-    public function test_frontdesk_can_send_chat_reply(): void
+    public function test_frontdesk_can_send_chat_reply_when_handling_own_ticket(): void
     {
+        $fdTicket = Ticket::create([
+            'user_id' => $this->frontDeskUser->id,
+            'nomor_wa' => '081234567890',
+            'nama_pemohon' => 'Andi Pratama',
+            'keluhan' => 'Koneksi aplikasi error tidak bisa login',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'progress',
+            'assigned_at' => now(),
+        ]);
+
         $response = $this->actingAs($this->frontDeskUser)
-            ->post(route('frontdesk.tickets.chat.send', $this->ticket), [
-                'message' => 'Pesan diterima, tiket sedang kami triase.',
+            ->post(route('frontdesk.tickets.chat.send', $fdTicket), [
+                'message' => 'Pesan diterima, tiket sedang kami tangani di ruang kerja.',
             ]);
 
-        $response->assertRedirect(route('frontdesk.tickets.chat', $this->ticket));
+        $response->assertRedirect(route('frontdesk.tickets.chat', $fdTicket));
 
         $this->assertDatabaseHas('wa_logs', [
-            'ticket_id' => $this->ticket->id,
+            'ticket_id' => $fdTicket->id,
             'sender_type' => 'pegawai',
-            'message' => 'Pesan diterima, tiket sedang kami triase.',
+            'message' => 'Pesan diterima, tiket sedang kami tangani di ruang kerja.',
         ]);
     }
 
@@ -222,5 +235,287 @@ class TicketChatTest extends TestCase
         $response->assertSee(route('staf.dashboard'));
         $response->assertSee('Kembali ke Dashboard');
         $response->assertDontSee('Kembali ke Tiket Saya');
+    }
+
+    public function test_staf_can_send_chat_with_uploaded_photo(): void
+    {
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->image('bukti_perbaikan_server.jpg', 640, 480);
+
+        $response = $this->actingAs($this->stafUser)
+            ->post(route('staf.tickets.chat.send', $this->ticket), [
+                'message' => 'Berikut foto kabel server setelah diperbaiki.',
+                'lampiran' => $file,
+            ]);
+
+        $response->assertRedirect(route('staf.tickets.chat', $this->ticket));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('lampiran_tiket', [
+            'ticket_id' => $this->ticket->id,
+        ]);
+
+        $lampiran = LampiranTiket::where('ticket_id', $this->ticket->id)->first();
+        $this->assertNotNull($lampiran);
+        Storage::disk('public')->assertExists($lampiran->file_path);
+
+        $this->assertDatabaseHas('wa_logs', [
+            'ticket_id' => $this->ticket->id,
+            'sender_type' => 'pegawai',
+        ]);
+    }
+
+    public function test_frontdesk_can_send_chat_with_uploaded_photo(): void
+    {
+        Storage::fake('public');
+
+        $fdTicket = Ticket::create([
+            'user_id' => $this->frontDeskUser->id,
+            'nomor_wa' => '081234567890',
+            'nama_pemohon' => 'Andi Pratama',
+            'keluhan' => 'Koneksi aplikasi error tidak bisa login',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'progress',
+            'assigned_at' => now(),
+        ]);
+
+        $file = UploadedFile::fake()->image('foto_kondisi.png', 400, 300);
+
+        $response = $this->actingAs($this->frontDeskUser)
+            ->post(route('frontdesk.tickets.chat.send', $fdTicket), [
+                'message' => 'Laporan foto fisik perangkat.',
+                'lampiran' => $file,
+            ]);
+
+        $response->assertRedirect(route('frontdesk.tickets.chat', $fdTicket));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('lampiran_tiket', [
+            'ticket_id' => $fdTicket->id,
+        ]);
+    }
+
+    public function test_upload_rejects_non_image_files_and_files_exceeding_5mb(): void
+    {
+        Storage::fake('public');
+
+        // 1. Dokumen PDF harus ditolak (khusus gambar)
+        $pdfFile = UploadedFile::fake()->create('dokumen.pdf', 1024, 'application/pdf');
+
+        $responsePdf = $this->actingAs($this->stafUser)
+            ->post(route('staf.tickets.chat.send', $this->ticket), [
+                'message' => 'Lampiran PDF.',
+                'lampiran' => $pdfFile,
+            ]);
+
+        $responsePdf->assertSessionHasErrors('lampiran');
+
+        // 2. Foto melebihi 5 MB (6000 KB) harus ditolak
+        $largePhoto = UploadedFile::fake()->create('foto_raksasa.jpg', 6000, 'image/jpeg');
+
+        $responseLarge = $this->actingAs($this->stafUser)
+            ->post(route('staf.tickets.chat.send', $this->ticket), [
+                'message' => 'Foto terlalu besar.',
+                'lampiran' => $largePhoto,
+            ]);
+
+        $responseLarge->assertSessionHasErrors('lampiran');
+    }
+
+    public function test_user_can_download_uploaded_lampiran_photo(): void
+    {
+        Storage::fake('public');
+
+        $filePath = 'lampiran_tiket/test_image.jpg';
+        Storage::disk('public')->put($filePath, 'fake image content');
+
+        $lampiran = LampiranTiket::create([
+            'ticket_id' => $this->ticket->id,
+            'file_path' => $filePath,
+        ]);
+
+        $response = $this->actingAs($this->stafUser)
+            ->get(route('staf.tickets.lampiran.download', [
+                'ticket' => $this->ticket->id,
+                'lampiran' => $lampiran->id,
+            ]));
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->headers->has('content-disposition'));
+        $this->assertStringContainsString('attachment;', $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('test_image.jpg', $response->headers->get('content-disposition'));
+    }
+
+    public function test_unauthorized_download_attempt_for_different_ticket_is_aborted(): void
+    {
+        Storage::fake('public');
+
+        $otherTicket = Ticket::create([
+            'user_id' => $this->stafUser->id,
+            'nomor_wa' => '081211112222',
+            'nama_pemohon' => 'Tiket Lain',
+            'keluhan' => 'Kendala lain',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'progress',
+        ]);
+
+        $filePath = 'lampiran_tiket/other_image.png';
+        Storage::disk('public')->put($filePath, 'fake image content');
+
+        $lampiranOther = LampiranTiket::create([
+            'ticket_id' => $otherTicket->id,
+            'file_path' => $filePath,
+        ]);
+
+        // Mencoba mengakses lampiran milik otherTicket menggunakan id ticket pertama -> harus 403
+        $response = $this->actingAs($this->stafUser)
+            ->get(route('staf.tickets.lampiran.download', [
+                'ticket' => $this->ticket->id,
+                'lampiran' => $lampiranOther->id,
+            ]));
+
+        $response->assertStatus(403);
+    }
+
+    public function test_chat_sidebar_lampiran_section_auto_hides_when_no_photos_exist(): void
+    {
+        // 1. Tiket tanpa lampiran foto -> Seksi 4 tidak ditampilkan (Pilihan 1: Auto-Hide)
+        $responseEmpty = $this->actingAs($this->stafUser)
+            ->get(route('staf.tickets.chat', $this->ticket));
+
+        $responseEmpty->assertStatus(200);
+        $responseEmpty->assertDontSee('Lampiran Foto');
+
+        // 2. Tiket dengan lampiran foto -> Seksi 4 muncul otomatis
+        Storage::fake('public');
+        $filePath = 'lampiran_tiket/foto_muncul.jpg';
+        Storage::disk('public')->put($filePath, 'fake content');
+
+        LampiranTiket::create([
+            'ticket_id' => $this->ticket->id,
+            'file_path' => $filePath,
+        ]);
+
+        $responseWithPhoto = $this->actingAs($this->stafUser)
+            ->get(route('staf.tickets.chat', $this->ticket));
+
+        $responseWithPhoto->assertStatus(200);
+        $responseWithPhoto->assertSee('Lampiran Foto (1)');
+        $responseWithPhoto->assertSee('foto_muncul.jpg');
+        $responseWithPhoto->assertSee('Unduh');
+        $responseWithPhoto->assertSee('Lihat');
+    }
+
+    public function test_frontdesk_monitoring_staf_ticket_cannot_send_chat_and_sees_seal(): void
+    {
+        // Tiket ditangani oleh stafUser
+        $responseView = $this->actingAs($this->frontDeskUser)
+            ->get(route('frontdesk.tickets.chat', $this->ticket));
+
+        $responseView->assertStatus(200);
+        $responseView->assertSee('Tiket ini sedang ditangani oleh Budi Santoso');
+        $responseView->assertSee('Mode pemantauan (Read-Only)');
+        $responseView->assertDontSee('id="chatSendForm"', false);
+
+        // Frontdesk mencoba post langsung -> diblokir oleh guard clause
+        $responsePost = $this->actingAs($this->frontDeskUser)
+            ->post(route('frontdesk.tickets.chat.send', $this->ticket), [
+                'message' => 'Pesan paksa dari frontdesk saat monitoring.',
+            ]);
+
+        $responsePost->assertRedirect(route('frontdesk.tickets.chat', $this->ticket));
+        $responsePost->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('wa_logs', [
+            'ticket_id' => $this->ticket->id,
+            'message' => 'Pesan paksa dari frontdesk saat monitoring.',
+        ]);
+    }
+
+    public function test_user_cannot_send_chat_on_open_ticket_and_sees_seal(): void
+    {
+        $openTicket = Ticket::create([
+            'user_id' => null,
+            'nomor_wa' => '089988776655',
+            'nama_pemohon' => 'Warga Umum',
+            'keluhan' => 'Layanan wifi lambat',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'open',
+        ]);
+
+        $responseView = $this->actingAs($this->frontDeskUser)
+            ->get(route('frontdesk.tickets.chat', $openTicket));
+
+        $responseView->assertStatus(200);
+        $responseView->assertSee('Tiket ini masih berstatus Open di antrean umum');
+        $responseView->assertDontSee('id="chatSendForm"', false);
+
+        $responsePost = $this->actingAs($this->frontDeskUser)
+            ->post(route('frontdesk.tickets.chat.send', $openTicket), [
+                'message' => 'Mencoba membalas tiket open.',
+            ]);
+
+        $responsePost->assertRedirect(route('frontdesk.tickets.chat', $openTicket));
+        $responsePost->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('wa_logs', [
+            'ticket_id' => $openTicket->id,
+            'message' => 'Mencoba membalas tiket open.',
+        ]);
+    }
+
+    public function test_user_cannot_send_chat_on_completed_ticket_and_sees_seal(): void
+    {
+        $closedTicket = Ticket::create([
+            'user_id' => $this->stafUser->id,
+            'nomor_wa' => '089988776655',
+            'nama_pemohon' => 'Warga Selesai',
+            'keluhan' => 'Layanan wifi selesai',
+            'id_kategori_api' => $this->kategori->id,
+            'status' => 'selesai',
+        ]);
+
+        $responseView = $this->actingAs($this->stafUser)
+            ->get(route('staf.tickets.chat', $closedTicket));
+
+        $responseView->assertStatus(200);
+        $responseView->assertSee('Tiket ini sudah berstatus selesai. Percakapan chat telah diarsipkan.');
+        $responseView->assertDontSee('id="chatSendForm"', false);
+
+        $responsePost = $this->actingAs($this->stafUser)
+            ->post(route('staf.tickets.chat.send', $closedTicket), [
+                'message' => 'Mencoba membalas tiket selesai.',
+            ]);
+
+        $responsePost->assertRedirect(route('staf.tickets.chat', $closedTicket));
+        $responsePost->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('wa_logs', [
+            'ticket_id' => $closedTicket->id,
+            'message' => 'Mencoba membalas tiket selesai.',
+        ]);
+    }
+
+    public function test_another_staf_cannot_send_chat_on_staf_ticket(): void
+    {
+        $otherStaf = User::factory()->create([
+            'name' => 'Staf Lain',
+            'role' => 'staf_bidang',
+            'email' => 'staflain@pintas.com',
+        ]);
+
+        $responsePost = $this->actingAs($otherStaf)
+            ->post(route('staf.tickets.chat.send', $this->ticket), [
+                'message' => 'Mencoba membalas tiket staf lain.',
+            ]);
+
+        $responsePost->assertRedirect(route('staf.tickets.chat', $this->ticket));
+        $responsePost->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('wa_logs', [
+            'ticket_id' => $this->ticket->id,
+            'message' => 'Mencoba membalas tiket staf lain.',
+        ]);
     }
 }
