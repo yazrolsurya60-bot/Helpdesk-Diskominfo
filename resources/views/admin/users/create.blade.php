@@ -42,7 +42,7 @@
                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
 
-            <div class="mb-6">
+            <div class="mb-4">
                 <label for="role" class="block text-gray-700 font-bold mb-2">Role/Hak Akses</label>
                 <select id="role" name="role"
                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -50,6 +50,17 @@
                     <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator</option>
                     <option value="front_desk" {{ old('role') == 'front_desk' ? 'selected' : '' }}>Front Desk</option>
                     <option value="staf_bidang" {{ old('role') == 'staf_bidang' ? 'selected' : '' }}>Staf Bidang</option>
+                </select>
+            </div>
+
+            <div class="mb-6" id="bidangContainer">
+                <label for="bidang_id" class="block text-gray-700 font-bold mb-2">Bidang Penempatan (Khusus Staf Bidang)</label>
+                <select id="bidang_id" name="bidang_id"
+                    class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Pilih Bidang Penempatan --</option>
+                    @foreach($bidangList as $b)
+                        <option value="{{ $b->id }}" {{ old('bidang_id') == $b->id ? 'selected' : '' }}>{{ $b->nama_bidang }}</option>
+                    @endforeach
                 </select>
             </div>
 
