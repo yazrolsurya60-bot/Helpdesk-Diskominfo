@@ -21,6 +21,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         // Manajemen Users
         Route::resource('users', AdminController::class);
+        // Manajemen Bidang
+        Route::get('/bidang', [AdminController::class, 'indexBidang'])->name('bidang.index');
+        Route::post('/bidang', [AdminController::class, 'storeBidang'])->name('bidang.store');
+        Route::put('/bidang/{bidang}', [AdminController::class, 'updateBidang'])->name('bidang.update');
+        Route::delete('/bidang/{bidang}', [AdminController::class, 'destroyBidang'])->name('bidang.destroy');
         Route::get('/reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/export', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('reports.export');
         Route::get('/reports/print', [\App\Http\Controllers\Admin\ReportController::class, 'printReport'])->name('reports.print');
@@ -39,6 +44,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/tickets/{ticket}/tarik', [\App\Http\Controllers\Frontdesk\FrontdeskController::class, 'tarikTiket'])->name('tickets.tarik');
         Route::get('/tickets/{ticket}/chat', [\App\Http\Controllers\Frontdesk\FrontdeskController::class, 'chat'])->name('tickets.chat');
         Route::post('/tickets/{ticket}/chat', [\App\Http\Controllers\Frontdesk\FrontdeskController::class, 'kirimPesan'])->name('tickets.chat.send');
+        Route::get('/tickets/{ticket}/lampiran/{lampiran}/download', [\App\Http\Controllers\Frontdesk\FrontdeskController::class, 'downloadLampiran'])->name('tickets.lampiran.download');
     });
 
     // Staf Bidang Routes
@@ -50,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/tickets/{ticket}/selesai', [\App\Http\Controllers\Staf\StafController::class, 'selesai'])->name('tickets.selesai');
         Route::get('/tickets/{ticket}/chat', [\App\Http\Controllers\Staf\StafController::class, 'chat'])->name('tickets.chat');
         Route::post('/tickets/{ticket}/chat', [\App\Http\Controllers\Staf\StafController::class, 'kirimPesan'])->name('tickets.chat.send');
+        Route::get('/tickets/{ticket}/lampiran/{lampiran}/download', [\App\Http\Controllers\Staf\StafController::class, 'downloadLampiran'])->name('tickets.lampiran.download');
     });
 
     // Notifikasi Routes
