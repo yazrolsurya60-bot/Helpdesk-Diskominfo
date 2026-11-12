@@ -58,6 +58,21 @@
                     @error('role') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
+                <div>
+                    <label for="bidang_id"
+                        class="block font-label-md text-label-md font-semibold text-on-surface mb-1">Bidang Penempatan (Khusus Staf Bidang)</label>
+                    <select name="bidang_id" id="bidang_id"
+                        class="w-full px-3 py-2 rounded-lg bg-surface-container-low border-none focus:ring-2 focus:ring-primary text-body-sm font-body-sm @error('bidang_id') ring-2 ring-error @enderror">
+                        <option value="">-- Pilih Bidang Penempatan --</option>
+                        @foreach($bidangList as $b)
+                            <option value="{{ $b->id }}" {{ old('bidang_id', $user->bidang_id) == $b->id ? 'selected' : '' }}>
+                                {{ $b->nama_bidang }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('bidang_id') <span class="text-error text-xs mt-1 block">{{ $message }}</span> @enderror
+                </div>
+
                 <div class="pt-4">
                     <button type="submit"
                         class="px-6 py-2 rounded-lg bg-primary text-on-primary font-semibold hover:bg-primary-hover transition-colors">
