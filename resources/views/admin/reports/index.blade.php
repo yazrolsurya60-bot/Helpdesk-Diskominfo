@@ -1,17 +1,17 @@
 @extends('layouts.admin')
-@section('title', 'Reports & Analytics — Rekap Laporan')
+@section('title', 'Rekap Laporan & Analitik')
 @section('content')
   <div class="flex flex-col w-full">
-    <div class="px-margin_container py-stack_lg flex flex-col gap-stack_lg">
+    <div class="p-4 sm:p-6 lg:p-8 flex flex-col gap-6 w-full">
 
-      <!-- Alert Pesan Error / Sukses Sesuai Alur Flowchart -->
+      <!-- Alert Pesan Notifikasi -->
       @if(session('error'))
         <div class="p-4 rounded-xl bg-error-container text-on-error-container flex items-center justify-between gap-3 shadow-sm border border-error/20">
           <div class="flex items-center gap-2.5">
             <span class="material-symbols-outlined text-[22px] text-error">error</span>
             <span class="font-body-sm text-body-sm font-medium">{{ session('error') }}</span>
           </div>
-          <button type="button" onclick="this.parentElement.remove()" class="text-on-error-container/70 hover:text-on-error-container">
+          <button type="button" onclick="this.parentElement.remove()" class="text-on-error-container/70 hover:text-on-error-container cursor-pointer">
             <span class="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
@@ -23,51 +23,54 @@
             <span class="material-symbols-outlined text-[22px] text-emerald-600">check_circle</span>
             <span class="font-body-sm text-body-sm font-medium">{{ session('success') }}</span>
           </div>
-          <button type="button" onclick="this.parentElement.remove()" class="text-emerald-800/70 hover:text-emerald-800">
+          <button type="button" onclick="this.parentElement.remove()" class="text-emerald-800/70 hover:text-emerald-800 cursor-pointer">
             <span class="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
       @endif
 
-      <!-- Header Section with Title, Subtitle and Action Menu -->
-      <div
-        class="flex flex-col md:flex-row md:items-center justify-between gap-stack_md bg-surface-container-lowest p-stack_lg rounded-xl shadow-sm">
+      <!-- 1. Header Title Section & Export Ribbon -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex flex-col gap-1">
-          <div class="flex items-center gap-2">
-            <span class="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span> Terakhir disinkronkan: Data Real-Time
+          <div class="inline-flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-blue-100 text-primary">
+              REKAP &amp; ANALISIS EKSEKUTIF
             </span>
           </div>
-          <h1 class="font-headline-lg text-headline-lg text-on-background tracking-tight font-bold">Reports &amp; Rekap Laporan</h1>
-          <p class="font-body-md text-body-md text-on-surface-variant">Laporan performa kerja staf, dinas/bidang, dan statistik penyelesaian tiket layanan PINTAS</p>
+          <h1 class="text-2xl sm:text-3xl font-bold font-headline-lg text-on-surface tracking-tight mt-1">
+            Rekap Laporan
+          </h1>
+          <p class="text-sm font-body-md text-on-surface-variant max-w-2xl">
+            Laporan performa kerja staf, dinas/bidang, dan statistik penyelesaian tiket layanan PINTAS.
+          </p>
         </div>
 
-        <!-- Tombol Export Laporan (Sesuai Sequence Diagram) -->
-        <div class="flex items-center gap-stack_sm flex-wrap">
+        <!-- Tombol Export Laporan -->
+        <div class="flex items-center gap-2 self-start sm:self-auto">
           <div class="relative" id="exportDropdownContainer">
             <button
-              class="inline-flex items-center gap-2 px-stack_md py-2.5 rounded-lg bg-primary text-on-primary font-headline-sm text-headline-sm hover:bg-primary/90 hover:shadow-md transition-all cursor-pointer"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-[#172554] text-white font-headline-sm text-headline-sm font-semibold shadow-sm transition-all cursor-pointer"
               id="exportMenuBtn" type="button">
               <span class="material-symbols-outlined text-[18px]">ios_share</span>
               <span>Export Laporan</span>
               <span class="material-symbols-outlined text-[16px] transition-transform duration-200"
                 id="exportArrow">keyboard_arrow_down</span>
             </button>
-            <div class="hidden absolute right-0 mt-2 w-56 bg-surface-container-lowest rounded-xl shadow-xl p-1.5 z-30 border border-outline-variant/30"
+            <div class="hidden absolute right-0 mt-2 w-56 bg-surface-container-lowest rounded-xl shadow-xl p-1.5 z-30 border border-outline-variant/40"
               id="exportMenu">
-              <a class="flex items-center gap-2.5 px-3 py-2.5 text-on-surface rounded-lg hover:bg-surface-container-low transition-colors font-body-sm text-body-sm"
+              <a id="printReportLink" class="flex items-center gap-2.5 px-3 py-2 text-on-surface rounded-lg hover:bg-surface-container-low transition-colors font-body-sm text-body-sm"
                 href="{{ route('admin.reports.print', ['start_date' => $startDate, 'end_date' => $endDate, 'kategori_id' => $kategoriId]) }}"
                 target="_blank" title="Cetak / Pratinjau Dokumen PDF">
                 <span class="material-symbols-outlined text-error text-[20px]">picture_as_pdf</span>
                 <span class="font-medium">Dokumen PDF (.pdf)</span>
               </a>
-              <a class="flex items-center gap-2.5 px-3 py-2.5 text-on-surface rounded-lg hover:bg-surface-container-low transition-colors font-body-sm text-body-sm"
+              <a class="flex items-center gap-2.5 px-3 py-2 text-on-surface rounded-lg hover:bg-surface-container-low transition-colors font-body-sm text-body-sm"
                 href="{{ route('admin.reports.export', ['format' => 'excel', 'start_date' => $startDate, 'end_date' => $endDate, 'kategori_id' => $kategoriId]) }}"
                 title="Unduh Spreadsheet Excel">
                 <span class="material-symbols-outlined text-primary text-[20px]">table_view</span>
                 <span class="font-medium">Spreadsheet Excel (.csv)</span>
               </a>
-              <a class="flex items-center gap-2.5 px-3 py-2.5 text-on-surface rounded-lg hover:bg-surface-container-low transition-colors font-body-sm text-body-sm"
+              <a class="flex items-center gap-2.5 px-3 py-2 text-on-surface rounded-lg hover:bg-surface-container-low transition-colors font-body-sm text-body-sm"
                 href="{{ route('admin.reports.export', ['format' => 'csv', 'start_date' => $startDate, 'end_date' => $endDate, 'kategori_id' => $kategoriId]) }}"
                 title="Unduh Data Mentah CSV">
                 <span class="material-symbols-outlined text-secondary text-[20px]">csv</span>
@@ -78,80 +81,66 @@
         </div>
       </div>
 
-      <!-- Strictly 2 Top KPI Cards (Terkoneksi Data Database) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-        <!-- Card 1: Total Tickets -->
-        <div
-          class="relative overflow-hidden bg-surface-container-lowest p-gutter rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
-          <div class="flex items-start justify-between">
-            <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-2">
-                <span
-                  class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-semibold">Total
-                  TIKET</span>
-              </div>
-              <div class="flex items-baseline gap-3 mt-2">
-                <span
-                  class="font-headline-lg text-[36px] font-bold text-on-surface tracking-tight leading-none">{{ $totalTickets }}</span>
-                <span class="text-xs text-on-surface-variant font-medium">Tiket Tercatat</span>
-              </div>
+      <!-- 2. Top 2 Metric KPI Cards (Sesuai Standar Front Desk) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <!-- Card 1: Total Tiket -->
+        <div class="relative overflow-hidden bg-surface-container-lowest rounded-xl p-5 sm:p-6 border border-outline-variant/40 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-semibold">
+              Total Tiket
+            </span>
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">confirmation_number</span>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shadow-sm">
-              <span class="material-symbols-outlined text-[26px]">confirmation_number</span>
-            </div>
+          </div>
+          <div class="mt-4 flex items-baseline gap-2">
+            <span class="font-headline-lg text-3xl font-bold text-on-surface leading-none">{{ $totalTickets }}</span>
+            <span class="text-xs text-on-surface-variant font-medium">Tiket Tercatat</span>
           </div>
         </div>
-        <!-- Card 2: Total Resolved -->
-        <div
-          class="relative overflow-hidden bg-surface-container-lowest p-gutter rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#10b981]"></div>
-          <div class="flex items-start justify-between">
-            <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-2">
-                <span
-                  class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-semibold">Total
-                  Terselesaikan</span>
-              </div>
-              <div class="flex items-baseline gap-3 mt-2">
-                <span
-                  class="font-headline-lg text-[36px] font-bold text-on-surface tracking-tight leading-none">{{ $totalResolved }}</span>
-                <span class="text-xs text-on-surface-variant font-medium">Tiket Selesai</span>
-              </div>
-            </div>
-            <div
-              class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-[#10b981] shadow-sm">
-              <span class="material-symbols-outlined text-[26px]">check_circle</span>
+
+        <!-- Card 2: Total Terselesaikan -->
+        <div class="relative overflow-hidden bg-surface-container-lowest rounded-xl p-5 sm:p-6 border border-outline-variant/40 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-semibold">
+              Total Terselesaikan
+            </span>
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">check_circle</span>
             </div>
           </div>
+          <div class="mt-4 flex items-baseline gap-2">
+            <span class="font-headline-lg text-3xl font-bold text-on-surface leading-none">{{ $totalResolved }}</span>
+            <span class="text-xs text-on-surface-variant font-medium">Tiket Selesai</span>
+          </div>
           <!-- Resolution progress track -->
-          <div class="mt-4 pt-3 flex flex-col gap-1.5">
-            <div class="flex justify-between items-center font-label-sm text-label-sm text-on-surface-variant">
+          <div class="mt-4 pt-3 flex flex-col gap-1.5 border-t border-outline-variant/20">
+            <div class="flex justify-between items-center font-label-sm text-xs text-on-surface-variant">
               <span>Rasio Penyelesaian</span>
               <span class="font-semibold text-on-surface">{{ $totalResolved }} / {{ $totalTickets }} Tiket ({{ $resolutionRate }}%)</span>
             </div>
             <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
-              <div class="h-full bg-[#10b981] rounded-full transition-all duration-500" style="width: {{ $resolutionRate }}%;"></div>
+              <div class="h-full bg-emerald-600 rounded-full transition-all duration-500" style="width: {{ $resolutionRate }}%;"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- FORM FILTER: RENTANG WAKTU TANGGAL (DISEBELAH KIRI SEMUA LAYANAN) -->
+      <!-- 3. Form Filter Toolbar (Rentang Waktu & Kategori Layanan) -->
       <form method="GET" action="{{ route('admin.reports.index') }}"
-        class="bg-surface-container-lowest p-4 sm:p-5 rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-outline-variant/30">
+        class="bg-surface-container-lowest p-4 sm:p-5 rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-outline-variant/40">
         
         <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <!-- 1. Form Input Rentang Waktu Tanggal (Disebelah Kiri "Semua Layanan") -->
+          <!-- Rentang Tanggal -->
           <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
-            <div class="flex items-center bg-surface-container-low rounded-lg px-3 py-1.5 border border-outline-variant/40 flex-1 sm:flex-initial">
+            <div class="flex items-center bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/50 shadow-xs flex-1 sm:flex-initial">
               <span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-1.5">calendar_month</span>
               <label for="startDate" class="text-xs font-semibold text-on-surface-variant mr-1.5">Dari:</label>
               <input type="date" id="startDate" name="start_date" value="{{ $startDate }}"
                 class="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none cursor-pointer">
             </div>
             <span class="text-on-surface-variant text-xs font-medium shrink-0">s/d</span>
-            <div class="flex items-center bg-surface-container-low rounded-lg px-3 py-1.5 border border-outline-variant/40 flex-1 sm:flex-initial">
+            <div class="flex items-center bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/50 shadow-xs flex-1 sm:flex-initial">
               <span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-1.5">event</span>
               <label for="endDate" class="text-xs font-semibold text-on-surface-variant mr-1.5">Sampai:</label>
               <input type="date" id="endDate" name="end_date" value="{{ $endDate }}"
@@ -159,13 +148,12 @@
             </div>
           </div>
 
-          <!-- 2. Dropdown Kategori / "Semua Layanan" (Disebelah Kanan Rentang Tanggal) -->
+          <!-- Dropdown Kategori Layanan -->
           <div class="relative w-full sm:w-auto">
-            <label class="sr-only" for="categoryFilter">Kategori Layanan</label>
-            <div class="flex items-center bg-surface-container-low rounded-lg px-3 py-1.5 border border-outline-variant/40">
+            <div class="flex items-center bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/50 shadow-xs">
               <span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-1.5">tune</span>
               <select name="kategori_id"
-                class="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none cursor-pointer pr-4 py-0.5 w-full sm:w-auto"
+                class="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none cursor-pointer pr-4 w-full sm:w-auto"
                 id="categoryFilter">
                 <option value="all">Semua Layanan</option>
                 @foreach($categories as $cat)
@@ -177,17 +165,17 @@
             </div>
           </div>
 
-          <!-- 3. Tombol Aksi Terapkan Filter & Reset -->
+          <!-- Tombol Terapkan & Reset -->
           <div class="flex items-center gap-2">
             <button type="submit"
-              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-xs font-semibold hover:bg-primary/90 shadow-sm transition-all cursor-pointer">
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-[#172554] text-white font-headline-sm text-xs font-semibold shadow-sm transition-colors cursor-pointer">
               <span class="material-symbols-outlined text-[16px]">filter_alt</span>
               <span>Terapkan Filter</span>
             </button>
 
             @if($startDate || $endDate || ($kategoriId && $kategoriId !== 'all'))
               <a href="{{ route('admin.reports.index') }}"
-                class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface text-xs font-medium transition-colors border border-outline-variant/30"
+                class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-outline-variant/50 bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-xs font-medium transition-colors shadow-xs"
                 title="Hapus Filter">
                 <span class="material-symbols-outlined text-[16px]">close</span>
                 <span>Reset</span>
@@ -196,19 +184,164 @@
           </div>
         </div>
 
-        <div class="text-xs text-on-surface-variant flex items-center gap-1">
-          <span class="material-symbols-outlined text-[16px]">info</span>
-          <span>Filter otomatis membatasi data KPI, tabel rekap kinerja, dan berkas ekspor.</span>
+        <div class="text-xs text-on-surface-variant flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[16px] text-primary">info</span>
+          <span>Data laporan otomatis tersinkronisasi secara real-time.</span>
         </div>
       </form>
 
-      <!-- TABEL LAPORAN KINERJA (DILETAKKAN SEBELUM TABEL GRAFIK) -->
-      <!-- Desain mengacu pada referensi tabel di menu "User Management" -->
-      <div class="bg-surface-container-lowest rounded-xl shadow-sm flex flex-col overflow-hidden border border-outline-variant/20">
+      <!-- 4. Tabel Daftar Tiket Penugasan Terkait (Single Card Container) -->
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/40 overflow-hidden flex flex-col w-full">
         <!-- Table Toolbar Header -->
-        <div class="p-stack_lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-stack_md border-b border-outline-variant/20">
-          <div class="flex items-center gap-stack_sm">
-            <div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shadow-sm shrink-0">
+        <div class="p-4 bg-surface-container-low/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-outline-variant/40">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[22px]">confirmation_number</span>
+            </div>
+            <div class="flex flex-col">
+              <div class="flex items-center gap-2">
+                <h2 class="font-headline-md text-headline-md font-bold text-on-surface">Daftar Tiket Penugasan Terkait</h2>
+                <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">
+                  {{ $tickets->total() }} Tiket
+                </span>
+              </div>
+              <p class="text-xs text-on-surface-variant font-body-sm">
+                Rincian tiket aduan dan permohonan layanan yang tercatat sesuai kriteria filter periode dan kategori
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-outline-variant/50 text-xs text-on-surface-variant font-medium shadow-xs">
+              <span class="material-symbols-outlined text-[14px]">tune</span>
+              Kategori: {{ $categories->firstWhere('id', $kategoriId)->nama_layanan ?? 'Semua Layanan' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="w-full overflow-x-auto">
+          <table class="w-full min-w-[900px] text-left border-collapse" id="ticketsTable">
+            <thead>
+              <tr class="bg-surface-container-low/60 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider border-b border-outline-variant/40">
+                <th class="py-3.5 px-5 font-semibold w-28" scope="col">No Tiket</th>
+                <th class="py-3.5 px-5 font-semibold w-36" scope="col">Tgl Masuk</th>
+                <th class="py-3.5 px-5 font-semibold" scope="col">Pemohon</th>
+                <th class="py-3.5 px-5 font-semibold" scope="col">Kategori Layanan</th>
+                <th class="py-3.5 px-5 font-semibold" scope="col">Kendala</th>
+                <th class="py-3.5 px-5 font-semibold" scope="col">Penanggung Jawab</th>
+                <th class="py-3.5 px-5 font-semibold text-center w-28" scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/20">
+              @forelse($tickets as $t)
+                <tr class="hover:bg-primary/5 transition-colors">
+                  <!-- No Tiket -->
+                  <td class="py-4 px-5 whitespace-nowrap font-mono font-bold text-primary">
+                    #TKT-{{ $t->id }}
+                  </td>
+
+                  <!-- Tgl Masuk -->
+                  <td class="py-4 px-5 whitespace-nowrap text-xs text-on-surface-variant">
+                    {{ $t->created_at ? $t->created_at->format('d/m/Y H:i') : '-' }}
+                  </td>
+
+                  <!-- Pemohon -->
+                  <td class="py-4 px-5">
+                    <div class="flex flex-col min-w-0">
+                      <span class="font-semibold text-on-surface truncate">{{ $t->nama_pemohon ?? '-' }}</span>
+                      @if($t->nomor_wa)
+                        <span class="text-xs text-on-surface-variant flex items-center gap-1 mt-0.5">
+                          <span class="material-symbols-outlined text-[13px]">call</span>
+                          {{ $t->nomor_wa }}
+                        </span>
+                      @endif
+                    </div>
+                  </td>
+
+                  <!-- Kategori Layanan -->
+                  <td class="py-4 px-5 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface border border-outline-variant/30">
+                      {{ $t->kategori->nama_layanan ?? 'Umum' }}
+                    </span>
+                  </td>
+
+                  <!-- Kendala -->
+                  <td class="py-4 px-5 max-w-xs text-xs text-on-surface-variant">
+                    <p class="line-clamp-2" title="{{ $t->keluhan }}">
+                      {{ \Illuminate\Support\Str::limit($t->keluhan, 70) }}
+                    </p>
+                  </td>
+
+                  <!-- Penanggung Jawab -->
+                  <td class="py-4 px-5 whitespace-nowrap">
+                    @if($t->user)
+                      <div class="flex flex-col">
+                        <span class="font-medium text-on-surface text-xs">{{ $t->user->name }}</span>
+                        <span class="text-[11px] text-on-surface-variant">
+                          {{ $t->user->bidangStaf->nama_bidang ?? ($t->user->role === 'front_desk' ? 'Front Desk' : 'Staf Bidang') }}
+                        </span>
+                      </div>
+                    @else
+                      <span class="inline-flex items-center gap-1 text-xs text-on-surface-variant italic">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                        Belum Ditugaskan
+                      </span>
+                    @endif
+                  </td>
+
+                  <!-- Status -->
+                  <td class="py-4 px-5 text-center whitespace-nowrap">
+                    @if($t->status === 'selesai')
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Selesai
+                      </span>
+                    @elseif($t->status === 'progress')
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        In Progress
+                      </span>
+                    @else
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                        Open
+                      </span>
+                    @endif
+                  </td>
+                </tr>
+              @empty
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-on-surface-variant">
+                    <div class="flex flex-col items-center justify-center">
+                      <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant mb-3">
+                        <span class="material-symbols-outlined text-2xl">inbox</span>
+                      </div>
+                      <span class="text-base font-semibold text-on-surface">Tidak ada data tiket</span>
+                      <p class="text-xs text-on-surface-variant mt-1 max-w-sm">
+                        Tidak ditemukan data tiket yang tercatat pada filter rentang tanggal atau kategori yang dipilih.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginasi Footer -->
+        @if($tickets->hasPages())
+          <div class="p-4 border-t border-outline-variant/30 bg-surface-container-low/20">
+            {{ $tickets->links() }}
+          </div>
+        @endif
+      </div>
+
+      <!-- 5. Tabel Laporan Kinerja Staf & Bidang (Single Card Container) -->
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/40 overflow-hidden flex flex-col w-full">
+        <!-- Table Toolbar Header -->
+        <div class="p-4 bg-surface-container-low/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-outline-variant/40">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
               <span class="material-symbols-outlined text-[22px]">badge</span>
             </div>
             <div class="flex flex-col">
@@ -223,39 +356,40 @@
               </p>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-on-surface-variant font-medium">
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-outline-variant/50 text-xs text-on-surface-variant font-medium shadow-xs">
+              <span class="material-symbols-outlined text-[14px]">date_range</span>
               Periode: {{ $startDate ? \Carbon\Carbon::parse($startDate)->format('d M Y') : 'Semua' }} s/d {{ $endDate ? \Carbon\Carbon::parse($endDate)->format('d M Y') : 'Sekarang' }}
             </span>
           </div>
         </div>
 
-        <!-- Data Table (Gaya User Management) -->
+        <!-- Data Table -->
         <div class="w-full overflow-x-auto">
-          <table class="w-full text-left border-collapse min-w-[800px]" id="performanceTable">
-            <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
-              <tr>
-                <th class="py-3 px-stack_lg font-semibold" scope="col">Nama Staf &amp; Email</th>
-                <th class="py-3 px-stack_md font-semibold" scope="col">Bidang / Unit Kerja</th>
-                <th class="py-3 px-stack_md font-semibold" scope="col">Peran (Role)</th>
-                <th class="py-3 px-stack_md font-semibold text-center" scope="col">Tiket Ditangani</th>
-                <th class="py-3 px-stack_md font-semibold text-center" scope="col">Tiket Selesai</th>
-                <th class="py-3 px-stack_md font-semibold text-center" scope="col">Tingkat Penyelesaian</th>
-                <th class="py-3 px-stack_lg text-right font-semibold" scope="col">Status Kinerja</th>
+          <table class="w-full min-w-[800px] text-left border-collapse" id="performanceTable">
+            <thead>
+              <tr class="bg-surface-container-low/60 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider border-b border-outline-variant/40">
+                <th class="py-3.5 px-5 font-semibold" scope="col">Nama Staf &amp; Kontak</th>
+                <th class="py-3.5 px-5 font-semibold" scope="col">Bidang / Unit Kerja</th>
+                <th class="py-3.5 px-5 font-semibold" scope="col">Peran Akses</th>
+                <th class="py-3.5 px-5 font-semibold text-center" scope="col">Tiket Ditangani</th>
+                <th class="py-3.5 px-5 font-semibold text-center" scope="col">Tiket Selesai</th>
+                <th class="py-3.5 px-5 font-semibold text-center" scope="col">Tingkat Penyelesaian</th>
+                <th class="py-3.5 px-5 text-right font-semibold" scope="col">Status Kinerja</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-outline-variant/20 text-body-sm font-body-sm text-on-surface">
+            <tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/20">
               @forelse($staffPerformance as $staf)
-                <tr class="hover:bg-surface-container-low/70 transition-colors">
-                  <!-- Kolom Staf dengan Avatar Inisial (Mirip User Management) -->
-                  <td class="py-3.5 px-stack_lg">
+                <tr class="hover:bg-primary/5 transition-colors">
+                  <!-- Kolom Staf dengan Avatar -->
+                  <td class="py-4 px-5 whitespace-nowrap">
                     <div class="flex items-center gap-3">
-                      <div class="w-9 h-9 rounded-full bg-primary-fixed text-primary font-headline-sm text-headline-sm font-bold flex items-center justify-center flex-shrink-0">
+                      <div class="w-9 h-9 rounded-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm font-bold flex items-center justify-center shrink-0 shadow-xs">
                         {{ strtoupper(substr($staf->name, 0, 2)) }}
                       </div>
                       <div class="flex flex-col min-w-0">
-                        <span class="font-headline-sm text-headline-sm font-semibold text-on-surface truncate">{{ $staf->name }}</span>
-                        <span class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 truncate">
+                        <span class="font-semibold text-on-surface truncate">{{ $staf->name }}</span>
+                        <span class="text-xs text-on-surface-variant flex items-center gap-1 truncate mt-0.5">
                           <span class="material-symbols-outlined text-[14px]">mail</span>
                           {{ $staf->email }}
                         </span>
@@ -264,55 +398,55 @@
                   </td>
 
                   <!-- Kolom Bidang / Unit Kerja -->
-                  <td class="py-3.5 px-stack_md font-medium text-on-surface">
+                  <td class="py-4 px-5 font-medium text-on-surface text-xs whitespace-nowrap">
                     {{ $staf->bidang }}
                   </td>
 
-                  <!-- Kolom Peran (Role Badge) -->
-                  <td class="py-3.5 px-stack_md">
+                  <!-- Kolom Peran (Role) -->
+                  <td class="py-4 px-5 whitespace-nowrap">
                     @if($staf->role === 'front_desk')
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm uppercase tracking-wider font-semibold">
-                        Front Desk
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Front Desk
                       </span>
                     @else
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-label-sm text-label-sm uppercase tracking-wider font-semibold">
-                        Staf Bidang
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Staf Bidang
                       </span>
                     @endif
                   </td>
 
                   <!-- Kolom Tiket Ditangani -->
-                  <td class="py-3.5 px-stack_md font-bold text-on-surface text-center">
+                  <td class="py-4 px-5 font-bold text-on-surface text-center whitespace-nowrap">
                     {{ $staf->handled }}
                   </td>
 
                   <!-- Kolom Tiket Selesai -->
-                  <td class="py-3.5 px-stack_md font-bold text-emerald-600 text-center">
+                  <td class="py-4 px-5 font-bold text-emerald-600 text-center whitespace-nowrap">
                     {{ $staf->resolved }}
                   </td>
 
                   <!-- Kolom Tingkat Penyelesaian -->
-                  <td class="py-3.5 px-stack_md text-center">
+                  <td class="py-4 px-5 text-center whitespace-nowrap">
                     <div class="flex flex-col items-center gap-1">
                       <span class="font-semibold text-on-surface text-xs">{{ $staf->rate }}%</span>
                       <div class="w-24 h-1.5 rounded-full bg-surface-container overflow-hidden">
-                        <div class="h-full bg-primary rounded-full" style="width: {{ $staf->rate }}%;"></div>
+                        <div class="h-full bg-primary rounded-full transition-all duration-300" style="width: {{ $staf->rate }}%;"></div>
                       </div>
                     </div>
                   </td>
 
                   <!-- Kolom Status Performa -->
-                  <td class="py-3.5 px-stack_lg text-right">
+                  <td class="py-4 px-5 text-right whitespace-nowrap">
                     @if($staf->handled > 0 && $staf->rate >= 75)
-                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Optimal
                       </span>
                     @elseif($staf->handled > 0)
-                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold">
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Aktif
                       </span>
                     @else
-                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs font-medium">
                         <span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Standby
                       </span>
                     @endif
@@ -321,9 +455,14 @@
               @empty
                 <tr>
                   <td colspan="7" class="py-12 text-center text-on-surface-variant">
-                    <div class="flex flex-col items-center justify-center gap-2">
-                      <span class="material-symbols-outlined text-[40px] text-outline-variant">person_off</span>
-                      <p class="font-medium text-sm">Tidak ada staf teknis terdaftar dalam sistem.</p>
+                    <div class="flex flex-col items-center justify-center">
+                      <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant mb-3">
+                        <span class="material-symbols-outlined text-2xl">person_off</span>
+                      </div>
+                      <span class="text-base font-semibold text-on-surface">Tidak ada staf teknis terdaftar</span>
+                      <p class="text-xs text-on-surface-variant mt-1 max-w-sm">
+                        Belum ada staf helpdesk yang tercatat dalam sistem pada filter ini.
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -333,20 +472,20 @@
         </div>
       </div>
 
-      <!-- GRAFIK TREN & PENYELESAIAN TIKET (DILETAKKAN SETELAH TABEL LAPORAN KINERJA) -->
-      <div class="bg-surface-container-lowest p-gutter rounded-xl shadow-sm flex flex-col gap-stack_lg border border-outline-variant/20">
-        <!-- Chart Controls & Header -->
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-stack_md pb-stack_sm">
-          <div class="flex flex-col">
+      <!-- 6. Grafik Tren & Penyelesaian Tiket (Card Container) -->
+      <div class="bg-surface-container-lowest p-5 sm:p-6 rounded-xl shadow-sm border border-outline-variant/40 flex flex-col gap-5 w-full">
+        <!-- Header Grafik & Kontrol Filter Waktu -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-outline-variant/20">
+          <div class="flex flex-col gap-0.5">
             <h2 class="font-headline-md text-headline-md text-on-surface tracking-tight font-bold">Grafik Tren &amp; Penyelesaian Tiket</h2>
-            <span id="chartSubtitle" class="font-body-sm text-body-sm text-on-surface-variant">Visualisasi perbandingan tiket masuk &amp; tiket diselesaikan berdasarkan interval waktu operasional</span>
+            <span id="chartSubtitle" class="font-body-sm text-xs text-on-surface-variant">Visualisasi perbandingan tiket masuk &amp; tiket diselesaikan berdasarkan interval waktu operasional</span>
           </div>
-          <div class="flex flex-wrap items-center gap-stack_sm">
+          <div class="flex flex-wrap items-center gap-2">
             <!-- Time-period Pill Buttons -->
             <div class="inline-flex p-1 bg-surface-container rounded-lg" role="tablist">
               <button
                 class="px-3.5 py-1.5 rounded-md font-label-md text-label-md bg-surface-container-lowest text-primary font-bold shadow-sm transition-all cursor-pointer"
-                id="btnFilterDay" type="button">Hari ini / Per Hari</button>
+                id="btnFilterDay" type="button">Hari Ini / Per Hari</button>
               <button
                 class="px-3.5 py-1.5 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all cursor-pointer"
                 id="btnFilterMonth" type="button">Per Bulan</button>
@@ -357,7 +496,7 @@
           </div>
         </div>
 
-        <!-- Chart Legend & Status Meta -->
+        <!-- Legend Grafik & Status Meta -->
         <div class="flex flex-wrap items-center justify-between gap-4 pt-1">
           <div class="flex items-center gap-6">
             <div class="flex items-center gap-2">
@@ -366,7 +505,7 @@
               <span class="font-label-sm text-label-sm text-on-surface-variant">(Total Masuk)</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-3.5 h-3.5 rounded bg-[#10b981]"></span>
+              <span class="w-3.5 h-3.5 rounded bg-emerald-600"></span>
               <span class="font-body-sm text-body-sm font-semibold text-on-surface">Tiket Diselesaikan</span>
               <span class="font-label-sm text-label-sm text-on-surface-variant">(Resolved)</span>
             </div>
@@ -374,7 +513,7 @@
           <div id="chartPeriodMeta" class="text-xs text-on-surface-variant font-medium"></div>
         </div>
 
-        <!-- Main Visualized Bar Chart Area -->
+        <!-- Area Batang Visualisasi Grafik -->
         <div class="relative w-full overflow-x-auto py-2">
           <div class="min-w-[620px] h-[340px] flex flex-col justify-between relative pt-6">
             <!-- Dynamic Background Grid Lines (Values 0 to maxScale) -->
@@ -408,7 +547,6 @@
             </div>
           </div>
         </div>
-
       </div>
 
     </div>
@@ -469,9 +607,18 @@
           }
         });
 
-        // 2. Update subtitle
+        // 2. Update subtitle & link cetak
         if (chartSubtitle && subtitles[period]) {
           chartSubtitle.textContent = subtitles[period];
+        }
+
+        const printLink = document.getElementById('printReportLink');
+        if (printLink) {
+          try {
+            const url = new URL(printLink.href, window.location.origin);
+            url.searchParams.set('period', period);
+            printLink.href = url.pathname + url.search;
+          } catch (e) {}
         }
 
         // 3. Hitung total per periode & cari nilai maksimal
@@ -491,7 +638,7 @@
           const avgRate = totalMasuk > 0 ? Math.round((totalSelesai / totalMasuk) * 100) : 0;
           chartPeriodMeta.innerHTML = `<span class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-surface-container-low border border-outline-variant/30 text-on-surface font-medium">` +
             `Total Periode Ini: <strong class="text-primary font-bold">${totalMasuk} Masuk</strong> • ` +
-            `<strong class="text-[#10b981] font-bold">${totalSelesai} Selesai</strong> (${avgRate}% Diselesaikan)</span>`;
+            `<strong class="text-emerald-700 font-bold">${totalSelesai} Selesai</strong> (${avgRate}% Diselesaikan)</span>`;
         }
 
         // 5. Tentukan skala sumbu Y yang proporsional
@@ -544,7 +691,7 @@
                   <span class="font-headline-sm text-label-sm text-primary-fixed-dim font-bold uppercase tracking-wider">${item.tooltip_title || item.label}</span>
                   <div class="flex items-center justify-between gap-4 text-xs font-label-sm text-label-sm">
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-primary-fixed"></span> Masuk: <strong>${item.masuk}</strong></span>
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#10b981]"></span> Selesai: <strong>${item.selesai}</strong></span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Selesai: <strong>${item.selesai}</strong></span>
                   </div>
                   <span class="text-[10px] text-surface-dim mt-0.5">Tingkat Penanganan: ${item.rate}%</span>
                 </div>
@@ -556,7 +703,7 @@
                 <div class="w-3.5 sm:w-6 md:w-8 bg-primary-container rounded-t transition-all duration-300 group-hover:brightness-110 shadow-xs" style="${styleMasuk}" title="Tiket Masuk: ${item.masuk}">
                   <span class="sr-only">Tiket Masuk: ${item.masuk}</span>
                 </div>
-                <div class="w-3.5 sm:w-6 md:w-8 bg-[#10b981] rounded-t transition-all duration-300 group-hover:brightness-110 shadow-xs" style="${styleSelesai}" title="Tiket Diselesaikan: ${item.selesai}">
+                <div class="w-3.5 sm:w-6 md:w-8 bg-emerald-600 rounded-t transition-all duration-300 group-hover:brightness-110 shadow-xs" style="${styleSelesai}" title="Tiket Diselesaikan: ${item.selesai}">
                   <span class="sr-only">Tiket Diselesaikan: ${item.selesai}</span>
                 </div>
               </div>
@@ -570,7 +717,7 @@
         }).join('');
       }
 
-      // Pasang Event Listener pada ketiga tombol
+      // Event Listener pada tombol periode
       if (periodButtons.day) {
         periodButtons.day.addEventListener('click', () => renderChart('day'));
       }
