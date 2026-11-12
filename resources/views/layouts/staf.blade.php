@@ -163,10 +163,20 @@
                     Utama</span>
             </div>
             <nav class="flex flex-col px-stack_sm space-y-1">
-                <a aria-current="{{ Route::currentRouteName() === 'staf.dashboard' ? 'page' : 'false' }}"
+                <!-- KODE LAMA ACTIVE NAVIGATION -->
+                <!--<a aria-current="{{ Route::currentRouteName() === 'staf.dashboard' ? 'page' : 'false' }}"
                     class="flex items-center gap-stack_sm px-stack_md py-stack_sm rounded transition-colors {{ Route::currentRouteName() === 'staf.dashboard' ? 'bg-white/10 text-on-primary font-semibold shadow-sm border-l-4 border-white' : 'text-primary-fixed-dim hover:bg-white/5 hover:text-on-primary border-l-4 border-transparent' }}"
                     href="{{ route('staf.dashboard') }}">
-                    <span class="material-symbols-outlined text-[20px]">confirmation_number</span>
+                    <span class="material-symbols-outlined text-[20px]">inbox</span>
+                    <span class="font-body-md text-body-md">Dashboard Umum</span>
+                </a>
+                -->
+
+                <!--KODE BARU ACTIVE NAVIGATION-->
+                <a aria-current="{{ request()->routeIs('staf.dashboard', 'staf.index') ? 'page' : 'false' }}"
+                    class="flex items-center gap-stack_sm px-stack_md py-stack_sm rounded transition-colors {{ request()->routeIs('staf.dashboard', 'staf.index') ? 'bg-white/10 text-on-primary font-semibold shadow-sm border-l-4 border-white' : 'text-primary-fixed-dim hover:bg-white/5 hover:text-on-primary border-l-4 border-transparent' }}"
+                    href="{{ route('staf.dashboard') }}">
+                    <span class="material-symbols-outlined text-[20px]">inbox</span>
                     <span class="font-body-md text-body-md">Dashboard Umum</span>
                 </a>
                 <a aria-current="{{ Route::currentRouteName() === 'staf.tiket-saya' ? 'page' : 'false' }}"
