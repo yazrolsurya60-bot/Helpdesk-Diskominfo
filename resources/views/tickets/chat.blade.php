@@ -239,21 +239,44 @@
                     </div>
                 </div>
 
-                <!-- Section 4: Lampiran Berkas (Jika ada) -->
+                {{-- Section 4: Lampiran Foto (Pilihan 1: Otomatis Disembunyikan Jika Tidak Ada Foto) --}}
                 @if($ticket->lampiran && $ticket->lampiran->count() > 0)
                     <div class="pt-4 space-y-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Lampiran Berkas
-                            ({{ $ticket->lampiran->count() }})</span>
-                        <div class="space-y-1.5">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                            Lampiran Foto ({{ $ticket->lampiran->count() }})
+                        </span>
+                        <div class="space-y-2">
                             @foreach($ticket->lampiran as $lampiran)
-                                <a href="{{ asset('storage/' . $lampiran->file_path) }}" target="_blank"
-                                    class="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition">
-                                    <div class="flex items-center gap-2 truncate">
-                                        <i class="fa-solid fa-paperclip text-slate-400"></i>
-                                        <span class="truncate">{{ basename($lampiran->file_path) }}</span>
+                                @php
+                                    $downloadUrl = $userRole === 'front_desk'
+                                        ? route('frontdesk.tickets.lampiran.download', ['ticket' => $ticket->id, 'lampiran' => $lampiran->id])
+                                        : route('staf.tickets.lampiran.download', ['ticket' => $ticket->id, 'lampiran' => $lampiran->id]);
+                                    $imgUrl = asset('storage/' . $lampiran->file_path);
+                                    $fileName = basename($lampiran->file_path);
+                                @endphp
+                                <div class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition space-y-2">
+                                    <div class="flex items-center gap-2.5">
+                                        <img src="{{ $imgUrl }}" alt="{{ $fileName }}"
+                                            class="w-10 h-10 object-cover rounded-lg border border-slate-200 shrink-0 cursor-pointer hover:opacity-90 transition"
+                                            onclick="openLightbox('{{ $imgUrl }}', '{{ $downloadUrl }}')">
+                                        <div class="flex-1 min-w-0">
+                                            <span class="font-semibold text-slate-800 truncate block text-[11px]" title="{{ $fileName }}">{{ $fileName }}</span>
+                                            <span class="text-[10px] text-slate-400 block">{{ $lampiran->created_at ? $lampiran->created_at->format('d/m/Y H:i') : '-' }}</span>
+                                        </div>
                                     </div>
-                                    <i class="fa-solid fa-arrow-down text-slate-400 text-[11px]"></i>
-                                </a>
+                                    <div class="flex items-center justify-end gap-1.5 pt-1.5 border-t border-slate-200/60">
+                                        <button type="button" onclick="openLightbox('{{ $imgUrl }}', '{{ $downloadUrl }}')"
+                                            class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-[10px] font-semibold text-slate-700 inline-flex items-center gap-1 transition cursor-pointer">
+                                            <i class="fa-solid fa-eye text-[10px]"></i>
+                                            <span>Lihat</span>
+                                        </button>
+                                        <a href="{{ $downloadUrl }}"
+                                            class="px-2.5 py-1 rounded-lg bg-navy-600 hover:bg-navy-700 text-white text-[10px] font-semibold inline-flex items-center gap-1 transition shadow-2xs cursor-pointer">
+                                            <i class="fa-solid fa-download text-[10px]"></i>
+                                            <span>Unduh</span>
+                                        </a>
+                                    </div>
+                                </div>
                             @endforeach
                         </div>
                     </div>
@@ -410,6 +433,13 @@
 
                 <!-- Loop Riwayat Pesan dari wa_logs -->
                 @forelse($ticket->waLogs as $log)
+                    @php
+                        $hasPhoto = preg_match('/\[FOTO:(.*?)\]/', $log->message, $photoMatches);
+                        $cleanMessage = trim(preg_replace('/\[FOTO:.*?\]/', '', $log->message));
+                        $photoPath = $hasPhoto ? trim($photoMatches[1]) : null;
+                        $photoUrl = $photoPath ? asset('storage/' . $photoPath) : null;
+                    @endphp
+
                     @if($log->sender_type === 'pemohon')
                         <!-- Bubble Kiri: Pesan dari Pemohon -->
                         <div class="flex items-end gap-2 max-w-xl">
@@ -423,7 +453,23 @@
                                     <span
                                         class="text-[11px] font-bold text-navy-900">{{ $ticket->nama_pemohon ?? 'Pemohon' }}</span>
                                 </div>
-                                <p class="leading-relaxed whitespace-pre-line">{{ $log->message }}</p>
+
+                                @if($photoUrl)
+                                    <div class="mb-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 max-w-xs cursor-pointer group relative"
+                                        onclick="openLightbox('{{ $photoUrl }}', '{{ $photoUrl }}')">
+                                        <img src="{{ $photoUrl }}" alt="Foto Lampiran"
+                                            class="w-full max-h-56 object-cover rounded-xl hover:scale-105 transition-transform duration-200">
+                                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs gap-1">
+                                            <i class="fa-solid fa-expand"></i>
+                                            <span>Lihat Penuh</span>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if($cleanMessage)
+                                    <p class="leading-relaxed whitespace-pre-line">{{ $cleanMessage }}</p>
+                                @endif
+
                                 <div class="flex items-center justify-end gap-1 mt-1 text-[10px] text-slate-400 font-mono">
                                     <span>{{ $log->created_at ? $log->created_at->format('H:i') : '-' }}</span>
                                     <i class="fa-solid fa-check text-slate-400"></i>
@@ -438,7 +484,23 @@
                                 <div class="flex items-center justify-between gap-4 mb-1">
                                     <span class="text-[11px] font-bold text-emerald-900">Anda (Petugas Helpdesk)</span>
                                 </div>
-                                <p class="leading-relaxed whitespace-pre-line">{{ $log->message }}</p>
+
+                                @if($photoUrl)
+                                    <div class="mb-2 overflow-hidden rounded-xl border border-emerald-300 bg-emerald-50 max-w-xs cursor-pointer group relative"
+                                        onclick="openLightbox('{{ $photoUrl }}', '{{ $photoUrl }}')">
+                                        <img src="{{ $photoUrl }}" alt="Foto Lampiran"
+                                            class="w-full max-h-56 object-cover rounded-xl hover:scale-105 transition-transform duration-200">
+                                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs gap-1">
+                                            <i class="fa-solid fa-expand"></i>
+                                            <span>Lihat Penuh</span>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if($cleanMessage)
+                                    <p class="leading-relaxed whitespace-pre-line">{{ $cleanMessage }}</p>
+                                @endif
+
                                 <div class="flex items-center justify-end gap-1 mt-1 text-[10px] text-slate-500 font-mono">
                                     <span>{{ $log->created_at ? $log->created_at->format('H:i') : '-' }}</span>
                                     <i class="fa-solid fa-check-double text-blue-500"></i>
@@ -472,34 +534,73 @@
                     </div>
                 @endif
 
-                @if($ticket->status !== 'selesai')
-                    <form action="{{ $sendRoute }}" method="POST" class="flex items-center gap-2">
+                @if($errors->any())
+                    <div
+                        class="mb-2 p-2 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+                            {{ $errors->first() }}
+                        </span>
+                        <button type="button" onclick="this.parentElement.remove()"
+                            class="text-rose-600 hover:text-rose-800 font-bold">&times;</button>
+                    </div>
+                @endif
+
+                @if($canChat ?? ($ticket->status === 'progress' && $ticket->user_id === auth()->id()))
+                    <form action="{{ $sendRoute }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-2" id="chatSendForm">
                         @csrf
-                        <!-- Attachment & Emoticon Buttons -->
-                        <div class="flex items-center gap-0.5 text-slate-500">
-                            <button type="button" class="p-2.5 rounded-full hover:bg-slate-200 text-slate-600 transition"
-                                title="Emoticon">
-                                <i class="fa-regular fa-face-smile text-lg"></i>
+
+                        <!-- Tray Pratinjau Foto Sebelum Dikirim (Muncul saat foto dipilih) -->
+                        <div id="photoPreviewTray" class="hidden items-center justify-between bg-emerald-50 border border-emerald-300 rounded-xl p-2 px-3 shadow-2xs">
+                            <div class="flex items-center gap-2.5 truncate">
+                                <img id="previewImg" src="" alt="Pratinjau Foto" class="w-10 h-10 object-cover rounded-lg border border-emerald-400 shrink-0">
+                                <div class="min-w-0">
+                                    <span id="previewFileName" class="text-xs font-semibold text-emerald-900 truncate block"></span>
+                                    <span id="previewFileSize" class="text-[10px] text-emerald-700 block"></span>
+                                </div>
+                            </div>
+                            <button type="button" onclick="cancelPhotoSelection()" class="text-emerald-700 hover:text-rose-600 p-1.5 rounded-lg hover:bg-emerald-100 transition cursor-pointer" title="Batalkan Foto">
+                                <i class="fa-solid fa-xmark text-sm"></i>
                             </button>
                         </div>
 
-                        <!-- Text Input -->
-                        <div class="flex-1 relative">
-                            <input type="text" name="message" id="messageInput" required autocomplete="off"
-                                class="w-full py-2.5 px-4 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                                placeholder="Ketik pesan balasan ke pemohon via WhatsApp...">
-                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Input File Tersembunyi (Khusus Foto/Gambar JPG, PNG, WEBP max 5MB) -->
+                            <input type="file" name="lampiran" id="photoInput" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="handlePhotoSelect(event)">
 
-                        <!-- Send Button -->
-                        <button type="submit"
-                            class="bg-whatsapp hover:bg-whatsapp-dark active:bg-whatsapp-teal text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-2 text-sm shrink-0">
-                            <span>KIRIM</span>
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
-                        </button>
+                            {{-- Tombol Pilih Lampiran Foto --}}
+                            <div class="flex items-center gap-0.5 text-slate-500">
+                                <button type="button" onclick="document.getElementById('photoInput').click()"
+                                    class="p-2.5 rounded-full hover:bg-slate-200 text-slate-600 hover:text-emerald-600 transition flex items-center justify-center shrink-0 cursor-pointer"
+                                    title="Lampirkan Foto (JPG, PNG, WEBP maks 5MB)">
+                                    <i class="fa-regular fa-image text-lg"></i>
+                                </button>
+                            </div>
+
+                            <!-- Text Input -->
+                            <div class="flex-1 relative">
+                                <input type="text" name="message" id="messageInput" autocomplete="off"
+                                    class="w-full py-2.5 px-4 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                                    placeholder="Ketik pesan balasan (atau kirim foto di samping)...">
+                            </div>
+
+                            <!-- Send Button -->
+                            <button type="submit"
+                                class="bg-whatsapp hover:bg-whatsapp-dark active:bg-whatsapp-teal text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-2 text-sm shrink-0 cursor-pointer">
+                                <span>KIRIM</span>
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                        </div>
                     </form>
                 @else
                     <div class="text-center py-2 text-xs text-slate-500 italic">
-                        Tiket ini sudah berstatus selesai. Percakapan chat telah diarsipkan.
+                        @if($ticket->status === 'selesai')
+                            Tiket ini sudah berstatus selesai. Percakapan chat telah diarsipkan.
+                        @elseif($ticket->status === 'open')
+                            Tiket ini masih berstatus Open di antrean umum. Ambil tiket terlebih dahulu untuk dapat mengirim pesan balasan.
+                        @else
+                            Tiket ini sedang ditangani oleh {{ $ticket->user->name ?? 'petugas lain' }}. Mode pemantauan (Read-Only), hanya penanggung jawab yang dapat membalas pesan.
+                        @endif
                     </div>
                 @endif
             </div>
@@ -536,7 +637,23 @@
         </div>
     </div>
 
-    <!-- Script: Auto-Scroll Chat Timeline to Bottom -->
+    <!-- Modal Lightbox Pratinjau Foto Layar Penuh -->
+    <div id="lightboxModal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
+            <button type="button" onclick="closeLightbox()" class="absolute -top-10 right-0 text-white hover:text-rose-400 text-2xl transition p-1 cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <img id="lightboxImg" src="" alt="Pratinjau Layar Penuh" class="max-h-[75vh] w-auto max-w-full rounded-2xl shadow-2xl object-contain border border-white/20">
+            <div class="mt-3 flex items-center gap-3">
+                <a id="lightboxDownloadBtn" href="" download class="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold backdrop-blur-sm transition inline-flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Unduh Foto</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script: Auto-Scroll, Lightbox, dan Penanganan Unggah Foto -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const chatTimeline = document.getElementById('chatTimeline');
@@ -552,6 +669,96 @@
         function closeSelesaiModal() {
             document.getElementById('selesaiModal').classList.add('hidden');
         }
+
+        // Penanganan Pilih Foto & Pratinjau Mini Sebelum Dikirim
+        function handlePhotoSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validasi Tipe Berkas (Khusus Gambar)
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Format berkas tidak didukung. Mohon pilih foto dengan format JPG, JPEG, PNG, atau WEBP.');
+                event.target.value = '';
+                return;
+            }
+
+            // Validasi Ukuran Maksimal 5 MB (5 * 1024 * 1024 bytes)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran foto terlalu besar. Maksimal ukuran foto adalah 5 MB.');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('previewFileName').textContent = file.name;
+                document.getElementById('previewFileSize').textContent = formatBytes(file.size);
+
+                const tray = document.getElementById('photoPreviewTray');
+                tray.classList.remove('hidden');
+                tray.classList.add('flex');
+
+                // Hilangkan required dari input pesan jika foto disertakan
+                const msgInput = document.getElementById('messageInput');
+                if (msgInput) {
+                    msgInput.removeAttribute('required');
+                    msgInput.placeholder = 'Tambahkan keterangan foto (opsional)...';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelPhotoSelection() {
+            const input = document.getElementById('photoInput');
+            if (input) input.value = '';
+
+            const tray = document.getElementById('photoPreviewTray');
+            if (tray) {
+                tray.classList.add('hidden');
+                tray.classList.remove('flex');
+            }
+
+            const msgInput = document.getElementById('messageInput');
+            if (msgInput) {
+                msgInput.placeholder = 'Ketik pesan balasan (atau kirim foto di samping)...';
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Penanganan Modal Lightbox Pratinjau Layar Penuh
+        function openLightbox(imgUrl, downloadUrl) {
+            const modal = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImg');
+            const downloadBtn = document.getElementById('lightboxDownloadBtn');
+
+            if (modal && img) {
+                img.src = imgUrl;
+                if (downloadBtn) downloadBtn.href = downloadUrl || imgUrl;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightboxModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // Tutup lightbox jika mengklik area gelap di luar foto
+        window.addEventListener('click', function (e) {
+            const lightbox = document.getElementById('lightboxModal');
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
     </script>
 </body>
 
