@@ -63,8 +63,8 @@
                 </div>
             </div>
             <div class="px-gutter pt-stack_md pb-stack_sm"><span
-                    class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider font-semibold">Console
-                    Navigation</span></div>
+                    class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider font-semibold">Menu
+                    Utama</span></div>
             <nav class="flex flex-col px-stack_sm space-y-1"
                 data-active-classes="bg-white/10 text-on-primary font-semibold shadow-sm border-l-4 border-white">
                 <a aria-current="{{ Route::currentRouteName() === 'admin.dashboard' ? 'page' : 'false' }}"
@@ -77,6 +77,11 @@
                     data-path="admin-user-management" href="{{ route('admin.users.index') }}"><span
                         class="material-symbols-outlined text-[20px]">manage_accounts</span><span
                         class="font-body-md text-body-md">Manajemen User</span></a>
+                <a aria-current="{{ Route::currentRouteName() === 'admin.bidang.index' ? 'page' : 'false' }}"
+                    class="flex items-center gap-stack_sm px-stack_md py-stack_sm rounded transition-colors {{ Route::currentRouteName() === 'admin.bidang.index' ? 'bg-white/10 text-on-primary font-semibold shadow-sm border-l-4 border-white' : 'text-primary-fixed-dim hover:bg-white/5 hover:text-on-primary border-l-4 border-transparent' }}"
+                    data-path="admin-bidang-management" href="{{ route('admin.bidang.index') }}"><span
+                        class="material-symbols-outlined text-[20px]">domain</span><span
+                        class="font-body-md text-body-md">Manajemen Bidang</span></a>
                 <a aria-current="{{ Route::currentRouteName() === 'admin.reports.index' ? 'page' : 'false' }}"
                     class="flex items-center gap-stack_sm px-stack_md py-stack_sm rounded transition-colors {{ Route::currentRouteName() === 'admin.reports.index' ? 'bg-white/10 text-on-primary font-semibold shadow-sm border-l-4 border-white' : 'text-primary-fixed-dim hover:bg-white/5 hover:text-on-primary border-l-4 border-transparent' }}"
                     data-path="admin-reports-analytics" href="{{ route('admin.reports.index') }}"><span
@@ -135,13 +140,31 @@
         </header>
         <main class="relative pt-[64px] flex-grow bg-surface w-full overflow-x-hidden">
             @if (session('success'))
-                <div class="absolute top-[80px] right-gutter z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+                <div class="fixed top-[80px] right-gutter z-50" x-data="{ show: true }" x-show="show"
+                    x-init="setTimeout(() => show = false, 5000)" x-transition:leave="transition ease-in duration-300"
+                    x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2">
                     <div
-                        class="flex items-center gap-3 bg-surface-container-lowest border-l-4 border-primary px-4 py-3 rounded shadow-lg">
-                        <span class="material-symbols-outlined text-primary">check_circle</span>
+                        class="flex items-center gap-3 bg-surface-container-lowest border-l-4 border-emerald-600 px-4 py-3 rounded shadow-lg">
+                        <span class="material-symbols-outlined text-emerald-600">check_circle</span>
                         <span class="font-body-md text-body-md text-on-surface">{{ session('success') }}</span>
-                        <button type="button" class="ml-4 text-on-surface-variant hover:text-on-surface"
-                            onclick="this.parentElement.parentElement.remove()">
+                        <button type="button" class="ml-4 text-on-surface-variant hover:text-on-surface cursor-pointer"
+                            @click="show = false">
+                            <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="fixed top-[80px] right-gutter z-50" x-data="{ show: true }" x-show="show"
+                    x-init="setTimeout(() => show = false, 5000)" x-transition:leave="transition ease-in duration-300"
+                    x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2">
+                    <div
+                        class="flex items-center gap-3 bg-surface-container-lowest border-l-4 border-error px-4 py-3 rounded shadow-lg">
+                        <span class="material-symbols-outlined text-error">error</span>
+                        <span class="font-body-md text-body-md text-on-surface">{{ session('error') }}</span>
+                        <button type="button" class="ml-4 text-on-surface-variant hover:text-on-surface cursor-pointer"
+                            @click="show = false">
                             <span class="material-symbols-outlined text-[18px]">close</span>
                         </button>
                     </div>
