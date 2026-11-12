@@ -158,8 +158,8 @@
             </div>
             <div class="px-gutter pt-stack_md pb-stack_sm">
                 <span
-                    class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider font-semibold">Front
-                    Desk Operations</span>
+                    class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider font-semibold">Menu
+                    Utama</span>
             </div>
             <nav class="flex flex-col px-stack_sm space-y-1">
                 <a aria-current="{{ request()->routeIs('frontdesk.dashboard', 'frontdesk.index') ? 'page' : 'false' }}"
